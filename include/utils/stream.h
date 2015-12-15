@@ -1,0 +1,72 @@
+#ifndef UTILS_STREAM_H_
+#define UTILS_STREAM_H_
+/**
+ * Generic FIFO stream.
+ *
+ * Implemented by std::vector.
+ */
+#include <algorithm>    // for std::sort
+#include <vector>
+
+template <typename Data>
+class Stream {
+    public:
+        Stream(size_t num = 16) {
+            stream.reserve(num);
+        }
+
+        ~Stream() {}
+
+        /* Copy and move */
+
+        Stream(const Stream<Data>&) = delete;
+        Stream<Data>& operator=(const Stream<Data>&) = delete;
+
+        Stream(Stream<Data>&& s) { stream.swap(s.stream); }
+        Stream<Data>& operator=(Stream<Data>&& s) {
+            // avoid self assign
+            if (this == &s) return *this;
+            stream.swap(s.stream);
+            return *this;
+        }
+
+        /* Member access */
+
+        const Data* data() const { return stream.data(); }
+        Data* data() { return stream.data(); }
+        size_t size() const { return stream.size(); }
+        size_t byte_size() const { return size() * sizeof(Data); }
+
+        Data& operator[](size_t idx) { return stream[idx]; }
+        const Data& operator[](size_t idx) const { return stream[idx]; }
+
+        /* Modifiers */
+
+        void reset(size_t num = 16) {
+            decltype(stream) temp;
+            temp.reserve(num);
+            // use swap to set the capacity, others do not guarantee to shrink
+            // to the exact capacity.
+            stream.swap(temp);
+        }
+
+        void swap(Stream<Data>& s) {
+            stream.swap(s.stream);
+        }
+
+        void put(const Data& d) {
+            // The growth of the STL vector is implementation dependent, but it
+            // usually grows exponentially as a nearly-optimal solution.
+            stream.push_back(d);
+        }
+
+        void sort() {
+            std::sort(stream.begin(), stream.end());
+        }
+
+    private:
+        std::vector<Data> stream;
+};
+
+#endif // UTILS_STREAM_H_
+
