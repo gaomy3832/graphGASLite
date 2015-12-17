@@ -15,18 +15,13 @@ typedef IndexType<uint64_t, EdgeIdxRepType> EdgeIdx;
 class TileIdxRepType;
 typedef IndexType<uint64_t, TileIdxRepType> TileIdx;
 
+template<typename VertexDataType, typename EdgeWeightType>
+class GraphTile;
 
 template<typename VertexDataType>
 class Vertex {
 public:
     typedef VertexDataType DataType;
-
-    template<typename... Args>
-    explicit Vertex(const VertexIdx& vid, Args&&... args)
-        : vid_(vid), data_(vid, args...)
-    {
-        // Nothing else to do.
-    }
 
     VertexIdx vid() const { return vid_; }
 
@@ -38,6 +33,16 @@ private:
     VertexDataType data_;
 
 private:
+    template<typename VDT, typename EWT>
+    friend class GraphTile;
+
+    template<typename... Args>
+    explicit Vertex(const VertexIdx& vid, Args&&... args)
+        : vid_(vid), data_(vid, args...)
+    {
+        // Nothing else to do.
+    }
+
     Vertex(const Vertex&) = delete;
     Vertex& operator=(const Vertex&) = delete;
     bool operator==(const Vertex&) const = delete;
@@ -47,12 +52,6 @@ template<typename EdgeWeightType = uint32_t>
 class Edge {
 public:
     typedef EdgeWeightType WeightType;
-
-    Edge(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight)
-        : srcId_(srcId), dstId_(dstId), weight_(weight)
-    {
-        // Nothing else to do.
-    }
 
     /**
      * ``Less-than'' function used to sort edges, first source index, then dest index.
@@ -78,6 +77,15 @@ private:
     EdgeWeightType weight_;
 
 private:
+    template<typename VDT, typename EWT>
+    friend class GraphTile;
+
+    Edge(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight)
+        : srcId_(srcId), dstId_(dstId), weight_(weight)
+    {
+        // Nothing else to do.
+    }
+
     Edge(const Edge&) = delete;
     Edge& operator=(const Edge&) = delete;
     bool operator==(const Edge&) const = delete;
