@@ -106,6 +106,8 @@ public:
     VertexType& vertex(const VertexIdx& vid) { return vertices_[vid]; }
     const VertexType& vertex(const VertexIdx& vid) const { return vertices_[vid]; }
 
+    size_t vertexCount() const { return vertices_.size(); }
+
     /* Edges. */
 
     void edgeNew(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight) {
@@ -141,6 +143,8 @@ public:
     inline EdgeIter edgeIterEnd() {
         return edges_.end();
     }
+
+    size_t edgeCount() const { return edges_.size(); }
 
 private:
     const TileIdx tid_;
