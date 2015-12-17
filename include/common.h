@@ -1,10 +1,14 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <memory>
 #include <string>
 #include "utils/exception.h"
 
 using std::string;
+
+template<typename T>
+using Ptr = std::shared_ptr<T>;
 
 template<typename UnitType, typename RepType>
 struct IndexType {
