@@ -36,6 +36,11 @@ public:
 private:
     const VertexIdx vid_;
     VertexDataType data_;
+
+private:
+    Vertex(const Vertex&) = delete;
+    Vertex& operator=(const Vertex&) = delete;
+    bool operator==(const Vertex&) const = delete;
 };
 
 template<typename EdgeWeightType = uint32_t>
@@ -71,6 +76,11 @@ private:
     const VertexIdx srcId_;
     const VertexIdx dstId_;
     EdgeWeightType weight_;
+
+private:
+    Edge(const Edge&) = delete;
+    Edge& operator=(const Edge&) = delete;
+    bool operator==(const Edge&) const = delete;
 };
 
 
@@ -153,6 +163,11 @@ private:
     EdgeList edges_;
 
     bool edgeSorted_;
+
+private:
+    GraphTile(const GraphTile&) = delete;
+    GraphTile& operator=(const GraphTile&) = delete;
+    bool operator==(const GraphTile&) const = delete;
 
 };
 
