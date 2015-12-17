@@ -1,7 +1,10 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <string>
 #include "utils/exception.h"
+
+using std::string;
 
 template<typename UnitType, typename RepType>
 struct IndexType {
