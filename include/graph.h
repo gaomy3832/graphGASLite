@@ -98,7 +98,7 @@ public:
     typedef Vertex<VertexDataType> VertexType;
     typedef Edge<EdgeWeightType> EdgeType;
 
-    typedef std::unordered_map< VertexIdx, VertexType, std::hash<VertexIdx::Type> > VertexMap;
+    typedef std::unordered_map< VertexIdx, Ptr<VertexType>, std::hash<VertexIdx::Type> > VertexMap;
     typedef std::vector< EdgeType > EdgeList;
 
     typedef typename EdgeList::iterator EdgeIter;
@@ -115,14 +115,22 @@ public:
 
     /* Vertices. */
 
-    void vertexNew(const VertexType& vertex) {
-        if (vertices_.insert( typename VertexMap::value_type(vertex.vid(), vertex) ).second == false) {
-            throw KeyInUseException(std::to_string(vertex.vid()));
+    template<typename... Args>
+    void vertexNew(const VertexIdx& vid, Args&&... args) {
+        auto vertex = Ptr<VertexType>(new VertexType(vid, args...));
+        if (vertices_.insert( typename VertexMap::value_type(vid, vertex) ).second == false) {
+            throw KeyInUseException(std::to_string(vid));
         }
     }
 
-    VertexType& vertex(const VertexIdx& vid) { return vertices_[vid]; }
-    const VertexType& vertex(const VertexIdx& vid) const { return vertices_[vid]; }
+    Ptr<VertexType> vertex(const VertexIdx& vid) {
+        auto it = vertices_.find(vid);
+        if (it != vertices_.end()) {
+            return it->second;
+        } else {
+            return nullptr;
+        }
+    }
 
     size_t vertexCount() const { return vertices_.size(); }
 
