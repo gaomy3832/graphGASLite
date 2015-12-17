@@ -109,6 +109,12 @@ public:
     /* Edges. */
 
     void edgeNew(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight) {
+        if (vertices_.count(srcId) == 0) {
+            throw RangeException(std::to_string(srcId));
+        }
+        if (vertices_.count(dstId) == 0) {
+            throw RangeException(std::to_string(dstId));
+        }
         // Repeating edges with the same srcId and dstId are accepted.
         edges_.emplace_back(srcId, dstId, weight);
         edgeSorted_ &= EdgeType::lessFunc(edges_[edges_.size()-2], edges_[edges_.size()-1]);
