@@ -66,6 +66,14 @@ public:
     VertexIdx srcId() const { return srcId_; }
     VertexIdx dstId() const { return dstId_; }
 
+    /**
+     * Tile index for destination vertex.
+     *
+     * This imbalance comes from the edge affinity: edge belongs to the tile of
+     * its source vertex. So edge needs to know where is its destination vertex.
+     */
+    TileIdx dstTileId() const { return dstTileId_; }
+
     EdgeWeightType weight() const { return weight_; }
     void weightIs(const EdgeWeightType& weight) {
         weight_ = weight;
@@ -74,14 +82,15 @@ public:
 private:
     const VertexIdx srcId_;
     const VertexIdx dstId_;
+    const TileIdx dstTileId_;
     EdgeWeightType weight_;
 
 private:
     template<typename VDT, typename EWT>
     friend class GraphTile;
 
-    Edge(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight)
-        : srcId_(srcId), dstId_(dstId), weight_(weight)
+    Edge(const VertexIdx& srcId, const VertexIdx& dstId, const TileIdx& dstTileId, const EdgeWeightType& weight)
+        : srcId_(srcId), dstId_(dstId), dstTileId_(dstTileId), weight_(weight)
     {
         // Nothing else to do.
     }
@@ -136,15 +145,17 @@ public:
 
     /* Edges. */
 
-    void edgeNew(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight) {
+    void edgeNew(const VertexIdx& srcId, const VertexIdx& dstId, const TileIdx& dstTileId, const EdgeWeightType& weight) {
+        // Source vertex must be in this tile.
         if (vertices_.count(srcId) == 0) {
             throw RangeException(std::to_string(srcId));
         }
-        if (vertices_.count(dstId) == 0) {
+        // Destination vertex can be in different tile.
+        if (dstTileId == tid_ && vertices_.count(dstId) == 0) {
             throw RangeException(std::to_string(dstId));
         }
         // Repeating edges with the same srcId and dstId are accepted.
-        edges_.emplace_back(srcId, dstId, weight);
+        edges_.emplace_back(srcId, dstId, dstTileId, weight);
         edgeSorted_ &= EdgeType::lessFunc(edges_[edges_.size()-2], edges_[edges_.size()-1]);
     }
 
