@@ -72,9 +72,9 @@ public:
     }
 
 private:
-    const VertexIdx srcId_;
-    const VertexIdx dstId_;
-    const TileIdx dstTileId_;
+    VertexIdx srcId_;
+    VertexIdx dstId_;
+    TileIdx dstTileId_;
     EdgeWeightType weight_;
 
 private:
@@ -100,6 +100,13 @@ private:
     Edge(const Edge&) = delete;
     Edge& operator=(const Edge&) = delete;
     bool operator==(const Edge&) const = delete;
+
+public:
+    /**
+     * Move-assignable and move-constructible, to allow sorting.
+     */
+    Edge(Edge&&) = default;
+    Edge& operator=(Edge&&) = default;
 };
 
 
@@ -157,7 +164,8 @@ public:
             throw RangeException(std::to_string(dstId));
         }
         // Repeating edges with the same srcId and dstId are accepted.
-        edges_.emplace_back(srcId, dstId, dstTileId, weight);
+        // Use move constructor.
+        edges_.push_back(EdgeType(srcId, dstId, dstTileId, weight));
         edgeSorted_ &= EdgeType::lessFunc(edges_[edges_.size()-2], edges_[edges_.size()-1]);
     }
 
