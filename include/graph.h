@@ -55,16 +55,6 @@ class Edge {
 public:
     typedef EdgeWeightType WeightType;
 
-    /**
-     * ``Less-than'' function used to sort edges, first source index, then dest index.
-     *
-     * Avoid overloading ==, <, etc..
-     */
-    static bool lessFunc(const Edge& e1, const Edge& e2) {
-        if (e1.srcId_ == e2.srcId_) return e1.dstId_ < e2.dstId_;
-        return e1.srcId_ < e2.srcId_;
-    }
-
     VertexIdx srcId() const { return srcId_; }
     VertexIdx dstId() const { return dstId_; }
 
@@ -95,6 +85,16 @@ private:
         : srcId_(srcId), dstId_(dstId), dstTileId_(dstTileId), weight_(weight)
     {
         // Nothing else to do.
+    }
+
+    /**
+     * ``Less-than'' function used to sort edges, first source index, then dest index.
+     *
+     * Avoid overloading ==, <, etc..
+     */
+    static bool lessFunc(const Edge& e1, const Edge& e2) {
+        if (e1.srcId_ == e2.srcId_) return e1.dstId_ < e2.dstId_;
+        return e1.srcId_ < e2.srcId_;
     }
 
     Edge(const Edge&) = delete;
