@@ -45,6 +45,8 @@ private:
 
     Vertex(const Vertex&) = delete;
     Vertex& operator=(const Vertex&) = delete;
+    Vertex(Vertex&&) = delete;
+    Vertex& operator=(Vertex&&) = delete;
     bool operator==(const Vertex&) const = delete;
 };
 
@@ -194,6 +196,8 @@ private:
 private:
     GraphTile(const GraphTile&) = delete;
     GraphTile& operator=(const GraphTile&) = delete;
+    GraphTile(GraphTile&&) = delete;
+    GraphTile& operator=(GraphTile&&) = delete;
     bool operator==(const GraphTile&) const = delete;
 
 };
