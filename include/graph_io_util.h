@@ -7,11 +7,11 @@
 #include <vector>
 #include "graph.h"
 
-template<typename GraphType>
+template<typename GraphTileType>
 class GraphIOUtil {
 public:
-    typedef typename GraphType::VertexType VertexType;
-    typedef typename GraphType::EdgeType EdgeType;
+    typedef typename GraphTileType::VertexType VertexType;
+    typedef typename GraphTileType::EdgeType EdgeType;
 
     typedef typename EdgeType::WeightType EdgeWeightType;
 
@@ -47,7 +47,7 @@ public:
      * Other arguments are used to construct the vertex.
      */
     template<typename... Args>
-    void inputIs(std::vector< Ptr<GraphType> >& tiles,
+    void inputIs(std::vector< Ptr<GraphTileType> >& tiles,
             const string& edgeListFileName, const string& partitionFileName,
             Args&&... vertexArgs);
 
@@ -56,7 +56,7 @@ public:
      *
      * Default is doing nothing.
      */
-    virtual void outputIs(std::vector< Ptr<GraphType> >& tiles,
+    virtual void outputIs(std::vector< Ptr<GraphTileType> >& tiles,
             const string& outFileName) { }
 
 protected:
@@ -77,9 +77,9 @@ protected:
 };
 
 
-template<typename GraphType>
+template<typename GraphTileType>
 template<typename... Args>
-void GraphIOUtil<GraphType>::inputIs(std::vector< Ptr<GraphType> >& tiles,
+void GraphIOUtil<GraphTileType>::inputIs(std::vector< Ptr<GraphTileType> >& tiles,
         const string& edgeListFileName, const string& partitionFileName,
         Args&&... vertexArgs) {
 
