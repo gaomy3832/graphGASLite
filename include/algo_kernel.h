@@ -7,11 +7,15 @@
 template<typename GraphTileType>
 class BaseAlgoKernel {
 public:
+    class IterCountRepType;
+    typedef CountType<uint64_t, IterCountRepType> IterCount;
+
+public:
     /**
      * Maximum gather-scatter iterations to run.
      */
-    uint64_t maxIters() const { return maxIters_; }
-    void maxItersIs(const uint64_t maxIters) {
+    IterCount maxIters() const { return maxIters_; }
+    void maxItersIs(const IterCount& maxIters) {
         maxIters_ = maxIters;
     }
 
@@ -33,11 +37,14 @@ public:
     virtual void operator()(Ptr<GraphTileType>& graph) = 0;
 
 protected:
-    uint64_t maxIters_;
+    IterCount maxIters_;
     uint32_t numParts_;
 
 protected:
-    BaseAlgoKernel(const uint64_t maxIters = std::numeric_limits<uint64_t>::max(), const uint32_t numParts = 1)
+    BaseAlgoKernel(
+        const IterCount& maxIters = std::numeric_limits<typename IterCount::Type>::max(),
+        const uint32_t numParts = 1
+    )
         : maxIters_(maxIters), numParts_(numParts)
     {
         // Nothing else to do.
