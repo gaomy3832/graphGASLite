@@ -20,4 +20,84 @@ private:
     UnitType idx_;
 };
 
+template<typename UnitType, typename RepType>
+struct CountType {
+public:
+    CountType(const UnitType& cnt) : cnt_(cnt) {}
+    UnitType cnt() const {
+        return cnt_;
+    }
+    typedef UnitType Type;
+
+    inline bool operator==(const CountType& other) const {
+        return cnt_ == other.cnt_;
+    }
+    inline bool operator<(const CountType& other) const {
+        return cnt_ < other.cnt_;
+    }
+    inline bool operator!=(const CountType& other) const {
+        return !(*this == other);
+    }
+    inline bool operator<=(const CountType& other) const {
+        return !(other < *this);
+    }
+    inline bool operator>(const CountType& other) const {
+        return other < *this;
+    }
+    inline bool operator>=(const CountType& other) const {
+        return !(*this < other);
+    }
+
+    CountType& operator+=(const CountType& other) {
+        this->cnt_ += other.cnt_;
+        return *this;
+    }
+    CountType& operator-=(const CountType& other) {
+        this->cnt_ -= other.cnt_;
+        return *this;
+    }
+    friend CountType operator+(CountType lhs, const CountType& rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+    friend CountType operator-(CountType lhs, const CountType& rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
+
+    /**
+     * Prefix increment.
+     */
+    CountType& operator++() {
+        this->cnt_ += 1;
+        return *this;
+    }
+    /**
+     * Prefix decrement.
+     */
+    CountType& operator--() {
+        this->cnt_ -= 1;
+        return *this;
+    }
+    /**
+     * Postfix increment.
+     */
+    CountType operator++(int) {
+        CountType tmp(*this);
+        operator++();
+        return tmp;
+    }
+    /**
+     * Postfix decrement.
+     */
+    CountType operator--(int) {
+        CountType tmp(*this);
+        operator--();
+        return tmp;
+    }
+
+private:
+    UnitType cnt_;
+};
+
 #endif // COMMON_H_
