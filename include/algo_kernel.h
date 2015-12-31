@@ -58,4 +58,22 @@ protected:
 
 };
 
+template<typename GraphTileType, typename UpdateType>
+class EdgeCentricAlgoKernel : public BaseAlgoKernel<GraphTileType> {
+public:
+    typedef typename GraphTileType::VertexType VertexType;
+    typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
+    using typename BaseAlgoKernel<GraphTileType>::IterCount;
+
+};
+
+template<typename GraphTileType, typename UpdateType>
+class VertexCentricAlgoKernel : public BaseAlgoKernel<GraphTileType> {
+public:
+    typedef typename GraphTileType::VertexType VertexType;
+    typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
+    using typename BaseAlgoKernel<GraphTileType>::IterCount;
+
+};
+
 #endif // ALGO_KERNEL_H_
