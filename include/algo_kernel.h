@@ -4,6 +4,12 @@
 #include <limits>
 #include "graph.h"
 
+enum class AlgoKernelTag {
+    Invalid,
+    EdgeCentric,
+    VertexCentric,
+};
+
 template<typename GraphTileType>
 class BaseAlgoKernel {
 public:
@@ -11,6 +17,13 @@ public:
     typedef CountType<uint64_t, IterCountRepType> IterCount;
 
 public:
+    /**
+     * Algorithm kernel tag.
+     */
+    virtual AlgoKernelTag tag() const {
+        return AlgoKernelTag::Invalid;
+    }
+
     /**
      * Maximum gather-scatter iterations to run.
      */
@@ -65,6 +78,11 @@ public:
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
     using typename BaseAlgoKernel<GraphTileType>::IterCount;
 
+public:
+    AlgoKernelTag tag() const {
+        return AlgoKernelTag::EdgeCentric;
+    }
+
 };
 
 template<typename GraphTileType, typename UpdateType>
@@ -73,6 +91,11 @@ public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
     using typename BaseAlgoKernel<GraphTileType>::IterCount;
+
+public:
+    AlgoKernelTag tag() const {
+        return AlgoKernelTag::VertexCentric;
+    }
 
 };
 
