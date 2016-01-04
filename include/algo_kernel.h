@@ -24,11 +24,17 @@ public:
      * Instantiate an instance.
      */
     static Ptr<BaseAlgoKernel> instanceNew(
+        const string& name,
         const IterCount& maxIters = INF_ITER_COUNT,
         const uint32_t numParts = 1
     ) {
-        return Ptr<BaseAlgoKernel>(new BaseAlgoKernel(maxIters, numParts));
+        return Ptr<BaseAlgoKernel>(new BaseAlgoKernel(name, maxIters, numParts));
     }
+
+    /**
+     * Algorithm kernel name.
+     */
+    string name() const { return name_; }
 
     /**
      * Algorithm kernel tag.
@@ -69,12 +75,13 @@ public:
     }
 
 protected:
+    string name_;
     IterCount maxIters_;
     uint32_t numParts_;
 
 protected:
-    BaseAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
-        : maxIters_(maxIters), numParts_(numParts)
+    BaseAlgoKernel(const string& name, const IterCount& maxIters, const uint32_t numParts)
+        : name_(name), maxIters_(maxIters), numParts_(numParts)
     {
         // Nothing else to do.
     }
@@ -97,10 +104,11 @@ public:
 
 public:
     static Ptr<EdgeCentricAlgoKernel> instanceNew(
+        const string& name,
         const IterCount& maxIters = INF_ITER_COUNT,
         const uint32_t numParts = 1
     ) {
-        return Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(maxIters, numParts));
+        return Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(name, maxIters, numParts));
     }
 
     AlgoKernelTag tag() const {
@@ -110,13 +118,13 @@ public:
     /**
      * Clone the algorithm kernel.
      */
-    Ptr<EdgeCentricAlgoKernel> clone() const {
-        return EdgeCentricAlgoKernel::instanceNew(this->maxIters_, this->numParts_);
+    Ptr<EdgeCentricAlgoKernel> clone(const string& name) const {
+        return EdgeCentricAlgoKernel::instanceNew(name, this->maxIters_, this->numParts_);
     }
 
 protected:
-    EdgeCentricAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
-        : BaseAlgoKernel<GraphTileType>(maxIters, numParts)
+    EdgeCentricAlgoKernel(const string& name, const IterCount& maxIters, const uint32_t numParts)
+        : BaseAlgoKernel<GraphTileType>(name, maxIters, numParts)
     {
         // Nothing else to do.
     }
@@ -132,10 +140,11 @@ public:
 
 public:
     static Ptr<VertexCentricAlgoKernel> instanceNew(
+        const string& name,
         const IterCount& maxIters = INF_ITER_COUNT,
         const uint32_t numParts = 1
     ) {
-        return Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(maxIters, numParts));
+        return Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(name, maxIters, numParts));
     }
 
     AlgoKernelTag tag() const {
@@ -145,13 +154,13 @@ public:
     /**
      * Clone the algorithm kernel.
      */
-    Ptr<VertexCentricAlgoKernel> clone() const {
-        return VertexCentricAlgoKernel::instanceNew(this->maxIters_, this->numParts_);
+    Ptr<VertexCentricAlgoKernel> clone(const string& name) const {
+        return VertexCentricAlgoKernel::instanceNew(name, this->maxIters_, this->numParts_);
     }
 
 protected:
-    VertexCentricAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
-        : BaseAlgoKernel<GraphTileType>(maxIters, numParts)
+    VertexCentricAlgoKernel(const string& name, const IterCount& maxIters, const uint32_t numParts)
+        : BaseAlgoKernel<GraphTileType>(name, maxIters, numParts)
     {
         // Nothing else to do.
     }
