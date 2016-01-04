@@ -2,6 +2,7 @@
 #define ALGO_KERNEL_H_
 
 #include <limits>
+#include "comm_sync.h"
 #include "graph.h"
 
 enum class AlgoKernelTag {
@@ -58,8 +59,14 @@ public:
      * Call the algorithm kernel. Run iterations.
      *
      * The algorithm kernel is defined as a functor class.
+     *
+     * @param graph     Graph tile on which this kernel works.
+     * @param cs        Utility for comm & sync.
      */
-    virtual void operator()(Ptr<GraphTileType>& graph) = 0;
+    void operator()(Ptr<GraphTileType>& graph, CommSync& cs) {
+
+
+    }
 
 protected:
     IterCount maxIters_;
