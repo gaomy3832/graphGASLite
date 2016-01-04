@@ -69,10 +69,12 @@ class barrier {
         /**
          * Wait on the barrier.
          *
+         * @param onSerialPoint     A callback to be called at the barrier serial point.
+         *
          * @return      SERIAL_LAST_THREAD if the thread is the last one arriving
          *              at the barrier, or 0 otherwise.
          */
-        int wait() {
+        int wait(const std::function<void(void)>& onSerialPoint = [](){}) {
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 auto curBarCount = barCount_;
@@ -90,6 +92,8 @@ class barrier {
             remain_ = threadCount_;
             // Increase \c barCount_, which is used as the wait predicate.
             barCount_++;
+            // Call callback function at serial point.
+            if (onSerialPoint) onSerialPoint();
             // Notify all after updating wait predicate, should not hold the mutex.
             cv_.notify_all();
             return SERIAL_LAST_THREAD;
