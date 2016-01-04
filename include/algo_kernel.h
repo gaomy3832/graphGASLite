@@ -67,9 +67,57 @@ public:
      * @param cs        Utility for comm & sync.
      */
     void operator()(Ptr<GraphTileType>& graph, CommSync& cs) const {
+        // If need to print progress, i.e., verbose kernel and primary (index 0) tile.
+        auto printProgress = verbose() && (graph->tid() == 0);
 
+        // Start barrier, ensure all preparation is done in all threads.
+        cs.barrier();
 
+        onAlgoKernelStart(graph);
+
+        IterCount iter(0);
+        bool allConverged = false;
+        while (!allConverged && iter < maxIters()) {
+            bool converged = onIteration(graph, cs, iter);
+            onIterationEnd(graph, iter);
+            if (printProgress) info("->%lu", iter.cnt());
+
+            // Check if all tiles have converged.
+            allConverged = cs.barrierAND(converged);
+            iter++;
+        }
+        if (printProgress) info("Completed in %lu iterations", iter.cnt());
+
+        onAlgoKernelEnd(graph);
     }
+
+protected:
+    /**
+     * Operations on end of each iteration.
+     */
+    virtual void onIterationEnd(Ptr<GraphTileType>& graph, const IterCount& iter) const { }
+
+    /**
+     * Operations on start of the algorithm kernel.
+     */
+    virtual void onAlgoKernelStart(Ptr<GraphTileType>& graph) const { }
+
+    /**
+     * Operations on end of the algorithm kernel.
+     */
+    virtual void onAlgoKernelEnd(Ptr<GraphTileType>& graph) const { }
+
+protected:
+    /**
+     * Iteration.
+     *
+     * @param graph     Graph tile on which this kernel works.
+     * @param cs        Utility for comm & sync.
+     * @param iter      Current iteration count.
+     *
+     * @return          If converged in this tile.
+     */
+    virtual bool onIteration(Ptr<GraphTileType>& graph, CommSync& cs, const IterCount& iter) const = 0;
 
 protected:
     string name_;
