@@ -100,6 +100,13 @@ public:
         return AlgoKernelTag::EdgeCentric;
     }
 
+    /**
+     * Clone the algorithm kernel.
+     */
+    Ptr<EdgeCentricAlgoKernel> clone() const {
+        return EdgeCentricAlgoKernel::instanceNew(this->maxIters_, this->numParts_);
+    }
+
 protected:
     EdgeCentricAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
         : BaseAlgoKernel<GraphTileType>(maxIters, numParts)
@@ -126,6 +133,13 @@ public:
 
     AlgoKernelTag tag() const {
         return AlgoKernelTag::VertexCentric;
+    }
+
+    /**
+     * Clone the algorithm kernel.
+     */
+    Ptr<VertexCentricAlgoKernel> clone() const {
+        return VertexCentricAlgoKernel::instanceNew(this->maxIters_, this->numParts_);
     }
 
 protected:
