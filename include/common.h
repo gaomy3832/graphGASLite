@@ -10,6 +10,9 @@ using std::string;
 template<typename T>
 using Ptr = std::shared_ptr<T>;
 
+template<bool B, typename T, typename F>
+using conditional_t = typename std::conditional<B, T, F>::type;
+
 template<typename UnitType, typename RepType>
 struct IndexType {
 public:
