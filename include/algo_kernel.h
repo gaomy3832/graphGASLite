@@ -92,7 +92,7 @@ public:
     using BaseAlgoKernel<GraphTileType>::INF_ITER_COUNT;
 
 public:
-    AlgoKernelTag tag() const {
+    AlgoKernelTag tag() const final {
         return AlgoKernelTag::EdgeCentric;
     }
 
@@ -124,7 +124,7 @@ public:
     using BaseAlgoKernel<GraphTileType>::INF_ITER_COUNT;
 
 public:
-    AlgoKernelTag tag() const {
+    AlgoKernelTag tag() const final {
         return AlgoKernelTag::VertexCentric;
     }
 
