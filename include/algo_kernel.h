@@ -16,7 +16,19 @@ public:
     class IterCountRepType;
     typedef CountType<uint64_t, IterCountRepType> IterCount;
 
+    static constexpr auto INF_ITER_COUNT = std::numeric_limits<typename IterCount::Type>::max();
+
 public:
+    /**
+     * Instantiate an instance.
+     */
+    static Ptr<BaseAlgoKernel> instanceNew(
+        const IterCount& maxIters = INF_ITER_COUNT,
+        const uint32_t numParts = 1
+    ) {
+        return Ptr<BaseAlgoKernel>(new BaseAlgoKernel(maxIters, numParts));
+    }
+
     /**
      * Algorithm kernel tag.
      */
@@ -54,10 +66,7 @@ protected:
     uint32_t numParts_;
 
 protected:
-    BaseAlgoKernel(
-        const IterCount& maxIters = std::numeric_limits<typename IterCount::Type>::max(),
-        const uint32_t numParts = 1
-    )
+    BaseAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
         : maxIters_(maxIters), numParts_(numParts)
     {
         // Nothing else to do.
@@ -77,12 +86,26 @@ public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
     using typename BaseAlgoKernel<GraphTileType>::IterCount;
+    using BaseAlgoKernel<GraphTileType>::INF_ITER_COUNT;
 
 public:
+    static Ptr<EdgeCentricAlgoKernel> instanceNew(
+        const IterCount& maxIters = INF_ITER_COUNT,
+        const uint32_t numParts = 1
+    ) {
+        return Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(maxIters, numParts));
+    }
+
     AlgoKernelTag tag() const {
         return AlgoKernelTag::EdgeCentric;
     }
 
+protected:
+    EdgeCentricAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
+        : BaseAlgoKernel<GraphTileType>(maxIters, numParts)
+    {
+        // Nothing else to do.
+    }
 };
 
 template<typename GraphTileType, typename UpdateType>
@@ -91,12 +114,26 @@ public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
     using typename BaseAlgoKernel<GraphTileType>::IterCount;
+    using BaseAlgoKernel<GraphTileType>::INF_ITER_COUNT;
 
 public:
+    static Ptr<VertexCentricAlgoKernel> instanceNew(
+        const IterCount& maxIters = INF_ITER_COUNT,
+        const uint32_t numParts = 1
+    ) {
+        return Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(maxIters, numParts));
+    }
+
     AlgoKernelTag tag() const {
         return AlgoKernelTag::VertexCentric;
     }
 
+protected:
+    VertexCentricAlgoKernel(const IterCount& maxIters, const uint32_t numParts)
+        : BaseAlgoKernel<GraphTileType>(maxIters, numParts)
+    {
+        // Nothing else to do.
+    }
 };
 
 #endif // ALGO_KERNEL_H_
