@@ -33,6 +33,14 @@ public:
     }
 
     /**
+     * If print progress.
+     */
+    bool verbose() const { return verbose_; }
+    void verboseIs(const bool verbose) {
+        verbose_ = verbose;
+    }
+
+    /**
      * Maximum gather-scatter iterations to run.
      */
     IterCount maxIters() const { return maxIters_; }
@@ -65,12 +73,13 @@ public:
 
 protected:
     string name_;
+    bool verbose_;
     IterCount maxIters_;
     uint32_t numParts_;
 
 protected:
     BaseAlgoKernel(const string& name)
-        : name_(name), maxIters_(INF_ITER_COUNT), numParts_(1)
+        : name_(name), verbose_(false), maxIters_(INF_ITER_COUNT), numParts_(1)
     {
         // Nothing else to do.
     }
@@ -100,6 +109,7 @@ public:
      */
     Ptr<EdgeCentricAlgoKernel> clone(const string& name) const {
         auto c = Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(name));
+        c->verboseIs(this->verbose());
         c->maxItersIs(this->maxIters());
         c->numPartsIs(this->numParts());
         return c;
@@ -130,6 +140,7 @@ public:
      */
     Ptr<VertexCentricAlgoKernel> clone(const string& name) const {
         auto c = Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(name));
+        c->verboseIs(this->verbose());
         c->maxItersIs(this->maxIters());
         c->numPartsIs(this->numParts());
         return c;
