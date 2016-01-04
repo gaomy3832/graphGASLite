@@ -104,17 +104,6 @@ public:
         return AlgoKernelTag::EdgeCentric;
     }
 
-    /**
-     * Clone the algorithm kernel.
-     */
-    Ptr<EdgeCentricAlgoKernel> clone(const string& name) const {
-        auto c = Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(name));
-        c->verboseIs(this->verbose());
-        c->maxItersIs(this->maxIters());
-        c->numPartsIs(this->numParts());
-        return c;
-    }
-
 protected:
     EdgeCentricAlgoKernel(const string& name)
         : BaseAlgoKernel<GraphTileType>(name)
@@ -133,17 +122,6 @@ public:
 public:
     AlgoKernelTag tag() const final {
         return AlgoKernelTag::VertexCentric;
-    }
-
-    /**
-     * Clone the algorithm kernel.
-     */
-    Ptr<VertexCentricAlgoKernel> clone(const string& name) const {
-        auto c = Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(name));
-        c->verboseIs(this->verbose());
-        c->maxItersIs(this->maxIters());
-        c->numPartsIs(this->numParts());
-        return c;
     }
 
 protected:

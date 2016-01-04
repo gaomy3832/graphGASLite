@@ -138,7 +138,7 @@ public:
             // Clone the algorithm kernels for each worker.
             AlgoKernelList kernels;
             for (auto k : kernels_) {
-                kernels.push_back(k->clone(k->name() + "-" + std::to_string(graphTile->tid())));
+                kernels.push_back(k);
             }
             threadData.push_back({graphTile, kernels, &cs});
         }
