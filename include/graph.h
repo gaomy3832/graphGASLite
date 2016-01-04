@@ -38,7 +38,7 @@ private:
 
     template<typename... Args>
     explicit Vertex(const VertexIdx& vid, Args&&... args)
-        : vid_(vid), data_(vid, args...)
+        : vid_(vid), data_(vid, std::forward<Args>(args)...)
     {
         // Nothing else to do.
     }
@@ -135,7 +135,7 @@ public:
 
     template<typename... Args>
     void vertexNew(const VertexIdx& vid, Args&&... args) {
-        auto vertex = Ptr<VertexType>(new VertexType(vid, args...));
+        auto vertex = Ptr<VertexType>(new VertexType(vid, std::forward<Args>(args)...));
         if (vertices_.insert( typename VertexMap::value_type(vid, vertex) ).second == false) {
             throw KeyInUseException(std::to_string(vid));
         }

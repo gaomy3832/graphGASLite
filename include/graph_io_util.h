@@ -151,10 +151,10 @@ void GraphIOUtil<GraphTileType>::inputIs(std::vector< Ptr<GraphTileType> >& tile
             const auto srcTid = vertexTileIdx(srcId);
             const auto dstTid = vertexTileIdx(dstId);
             if (!tiles[srcTid]->vertex(srcId)) {
-                tiles[srcTid]->vertexNew(srcId, vertexArgs...);
+                tiles[srcTid]->vertexNew(srcId, std::forward<Args>(vertexArgs)...);
             }
             if (!tiles[dstTid]->vertex(dstId)) {
-                tiles[dstTid]->vertexNew(dstId, vertexArgs...);
+                tiles[dstTid]->vertexNew(dstId, std::forward<Args>(vertexArgs)...);
             }
             // Add edge.
             tiles[srcTid]->edgeNew(srcId, dstId, dstTid, weight);
