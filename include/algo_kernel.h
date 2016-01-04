@@ -69,8 +69,8 @@ protected:
     uint32_t numParts_;
 
 protected:
-    BaseAlgoKernel(const string& name, const IterCount& maxIters, const uint32_t numParts)
-        : name_(name), maxIters_(maxIters), numParts_(numParts)
+    BaseAlgoKernel(const string& name)
+        : name_(name), maxIters_(INF_ITER_COUNT), numParts_(1)
     {
         // Nothing else to do.
     }
@@ -89,7 +89,6 @@ public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
     using typename BaseAlgoKernel<GraphTileType>::IterCount;
-    using BaseAlgoKernel<GraphTileType>::INF_ITER_COUNT;
 
 public:
     AlgoKernelTag tag() const final {
@@ -100,16 +99,15 @@ public:
      * Clone the algorithm kernel.
      */
     Ptr<EdgeCentricAlgoKernel> clone(const string& name) const {
-        return Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(name, this->maxIters_, this->numParts_));
+        auto c = Ptr<EdgeCentricAlgoKernel>(new EdgeCentricAlgoKernel(name));
+        c->maxItersIs(this->maxIters());
+        c->numPartsIs(this->numParts());
+        return c;
     }
 
 protected:
-    EdgeCentricAlgoKernel(
-        const string& name,
-        const IterCount& maxIters = INF_ITER_COUNT,
-        const uint32_t numParts = 1
-    )
-        : BaseAlgoKernel<GraphTileType>(name, maxIters, numParts)
+    EdgeCentricAlgoKernel(const string& name)
+        : BaseAlgoKernel<GraphTileType>(name)
     {
         // Nothing else to do.
     }
@@ -121,7 +119,6 @@ public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
     using typename BaseAlgoKernel<GraphTileType>::IterCount;
-    using BaseAlgoKernel<GraphTileType>::INF_ITER_COUNT;
 
 public:
     AlgoKernelTag tag() const final {
@@ -132,16 +129,15 @@ public:
      * Clone the algorithm kernel.
      */
     Ptr<VertexCentricAlgoKernel> clone(const string& name) const {
-        return Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(name, this->maxIters_, this->numParts_));
+        auto c = Ptr<VertexCentricAlgoKernel>(new VertexCentricAlgoKernel(name));
+        c->maxItersIs(this->maxIters());
+        c->numPartsIs(this->numParts());
+        return c;
     }
 
 protected:
-    VertexCentricAlgoKernel(
-        const string& name,
-        const IterCount& maxIters = INF_ITER_COUNT,
-        const uint32_t numParts = 1
-    )
-        : BaseAlgoKernel<GraphTileType>(name, maxIters, numParts)
+    VertexCentricAlgoKernel(const string& name)
+        : BaseAlgoKernel<GraphTileType>(name)
     {
         // Nothing else to do.
     }
