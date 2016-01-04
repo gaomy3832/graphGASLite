@@ -21,7 +21,7 @@ public:
 
     typedef std::vector< Ptr<GraphTileType> > GraphTileList;
 
-    typedef std::vector< Ptr<AlgoKernelType> > AlgoKernelList;
+    typedef std::vector< Ptr<const AlgoKernelType> > AlgoKernelList;
     typedef typename AlgoKernelList::iterator AlgoKernelIter;
     typedef typename AlgoKernelList::const_iterator AlgoKernelConstIter;
 

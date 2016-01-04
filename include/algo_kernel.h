@@ -66,7 +66,7 @@ public:
      * @param graph     Graph tile on which this kernel works.
      * @param cs        Utility for comm & sync.
      */
-    void operator()(Ptr<GraphTileType>& graph, CommSync& cs) {
+    void operator()(Ptr<GraphTileType>& graph, CommSync& cs) const {
 
 
     }
