@@ -153,6 +153,35 @@ public:
     }
 
 protected:
+    /**
+     * Edge-centric scatter function.
+     *
+     * @param iter      Current iteration count.
+     * @param src       Source vertex.
+     * @param weight    Weight of the edge.
+     *
+     * @return          A pair consisting of the output update data, and a bool
+     *                  denoting whether the update is valid.
+     */
+    virtual std::pair<UpdateType, bool>
+    scatter(const IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& weight) const = 0;
+
+    /**
+     * Edge-centric gather function.
+     *
+     * @param iter      Current iteration count.
+     * @param dst       Destination vertex.
+     * @param update    Input update data.
+     *
+     * @return          Whether this vertex needs further update (not converged).
+     */
+    virtual bool
+    gather(const IterCount& iter, Ptr<VertexType>& dst, const UpdateType& update) const = 0;
+
+protected:
+    bool onIteration(Ptr<GraphTileType>& graph, CommSync& cs, const IterCount& iter) const final;
+
+protected:
     EdgeCentricAlgoKernel(const string& name)
         : BaseAlgoKernel<GraphTileType>(name)
     {
