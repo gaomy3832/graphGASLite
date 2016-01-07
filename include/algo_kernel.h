@@ -199,6 +199,44 @@ public:
     }
 
 protected:
+    /**
+     * Vertex-centric gather function.
+     *
+     * @param iter      Current iteration count.
+     * @param src       Source vertex.
+     * @param weight    Weight of the edge.
+     *
+     * @return          Output update data.
+     */
+    virtual UpdateType
+    gather(const IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& weight) const = 0;
+
+    /**
+     * Vertex-centric apply function.
+     *
+     * @param iter      Current iteration count.
+     * @param v         Vertex.
+     * @param accUpdate Accumulated update data.
+     */
+    virtual void
+    apply(const IterCount& iter, Ptr<VertexType>& v, const UpdateType& accUpdate) const = 0;
+
+    /**
+     * Vertex-centric scatter function.
+     *
+     * @param iter      Current iteration count.
+     * @param src       Source vertex.
+     *
+     * @return          Whether to activate the destination vertex for gathering
+     *                  in the next iteration.
+     */
+    virtual bool
+    scatter(const IterCount& iter, Ptr<VertexType>& src) const = 0;
+
+protected:
+    bool onIteration(Ptr<GraphTileType>& graph, CommSync& cs, const IterCount& iter) const final;
+
+protected:
     VertexCentricAlgoKernel(const string& name)
         : BaseAlgoKernel<GraphTileType>(name)
     {
