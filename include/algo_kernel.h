@@ -139,11 +139,12 @@ protected:
 
 };
 
-template<typename GraphTileType, typename UpdateType>
+template<typename GraphTileType>
 class EdgeCentricAlgoKernel : public BaseAlgoKernel<GraphTileType> {
 public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
+    typedef typename GraphTileType::UpdateType UpdateType;
 
 public:
     AlgoKernelTag tag() const final {
@@ -187,11 +188,12 @@ protected:
     }
 };
 
-template<typename GraphTileType, typename UpdateType>
+template<typename GraphTileType>
 class VertexCentricAlgoKernel : public BaseAlgoKernel<GraphTileType> {
 public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
+    typedef typename GraphTileType::UpdateType UpdateType;
 
 public:
     AlgoKernelTag tag() const final {

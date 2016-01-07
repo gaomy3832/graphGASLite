@@ -9,14 +9,14 @@
 #include "comm_sync.h"
 #include "graph.h"
 
-template<typename GraphTileType, typename UpdateType, AlgoKernelTag akTag>
+template<typename GraphTileType, AlgoKernelTag akTag>
 class Engine {
 public:
     /**
      * Define algorithm kernel type based on tag.
      */
-    typedef conditional_t< akTag == AlgoKernelTag::EdgeCentric, EdgeCentricAlgoKernel<GraphTileType, UpdateType>,
-            conditional_t< akTag == AlgoKernelTag::VertexCentric, VertexCentricAlgoKernel<GraphTileType, UpdateType>,
+    typedef conditional_t< akTag == AlgoKernelTag::EdgeCentric, EdgeCentricAlgoKernel<GraphTileType>,
+            conditional_t< akTag == AlgoKernelTag::VertexCentric, VertexCentricAlgoKernel<GraphTileType>,
             BaseAlgoKernel<GraphTileType> > > AlgoKernelType;
 
     typedef std::vector< Ptr<GraphTileType> > GraphTileList;

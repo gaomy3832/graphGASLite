@@ -15,7 +15,7 @@ typedef IndexType<uint64_t, EdgeIdxRepType> EdgeIdx;
 class TileIdxRepType;
 typedef IndexType<uint64_t, TileIdxRepType> TileIdx;
 
-template<typename VertexDataType, typename EdgeWeightType>
+template<typename VertexDataType, typename UpdateDataType, typename EdgeWeightType>
 class GraphTile;
 
 template<typename VertexDataType>
@@ -33,7 +33,7 @@ private:
     VertexDataType data_;
 
 private:
-    template<typename VDT, typename EWT>
+    template<typename VDT, typename UDT, typename EWT>
     friend class GraphTile;
 
     template<typename... Args>
@@ -50,6 +50,54 @@ private:
     bool operator==(const Vertex&) const = delete;
 };
 
+template<typename UpdateDataType>
+class MirrorVertex {
+public:
+    typedef UpdateDataType UpdateType;
+
+    VertexIdx vid() const { return vid_; }
+
+    TileIdx masterTileId() const { return masterTileId_; }
+
+    UpdateType accUpdate() const { return accUpdate_; }
+
+    /**
+     * Add a new update, i.e., merge into accUpdate.
+     */
+    void updateNew(const UpdateType& update) {
+        accUpdate_ += update;
+    }
+
+    /**
+     * Delete all updates, i.e., reset accUpdate.
+     */
+    void updateDelAll() {
+        accUpdate_ = UpdateType();
+    }
+
+protected:
+    const VertexIdx vid_;
+    const TileIdx masterTileId_;
+    UpdateType accUpdate_;
+
+protected:
+    template<typename VDT, typename UDT, typename EWT>
+    friend class GraphTile;
+
+    template<typename... Args>
+    MirrorVertex(const VertexIdx& vid, const TileIdx& masterTileId, Args&&... args)
+        : vid_(vid), masterTileId_(masterTileId), accUpdate_(std::forward<Args>(args)...)
+    {
+        // Nothing else to do.
+    }
+
+    MirrorVertex(const MirrorVertex&) = delete;
+    MirrorVertex& operator=(const MirrorVertex&) = delete;
+    MirrorVertex(MirrorVertex&&) = delete;
+    MirrorVertex& operator=(MirrorVertex&&) = delete;
+    bool operator==(const MirrorVertex&) const = delete;
+};
+
 template<typename EdgeWeightType = uint32_t>
 class Edge {
 public:
@@ -57,14 +105,6 @@ public:
 
     VertexIdx srcId() const { return srcId_; }
     VertexIdx dstId() const { return dstId_; }
-
-    /**
-     * Tile index for destination vertex.
-     *
-     * This imbalance comes from the edge affinity: edge belongs to the tile of
-     * its source vertex. So edge needs to know where is its destination vertex.
-     */
-    TileIdx dstTileId() const { return dstTileId_; }
 
     EdgeWeightType weight() const { return weight_; }
     void weightIs(const EdgeWeightType& weight) {
@@ -74,15 +114,14 @@ public:
 private:
     VertexIdx srcId_;
     VertexIdx dstId_;
-    TileIdx dstTileId_;
     EdgeWeightType weight_;
 
 private:
-    template<typename VDT, typename EWT>
+    template<typename VDT, typename UDT, typename EWT>
     friend class GraphTile;
 
-    Edge(const VertexIdx& srcId, const VertexIdx& dstId, const TileIdx& dstTileId, const EdgeWeightType& weight)
-        : srcId_(srcId), dstId_(dstId), dstTileId_(dstTileId), weight_(weight)
+    Edge(const VertexIdx& srcId, const VertexIdx& dstId, const EdgeWeightType& weight)
+        : srcId_(srcId), dstId_(dstId), weight_(weight)
     {
         // Nothing else to do.
     }
@@ -110,17 +149,23 @@ public:
 };
 
 
-template<typename VertexDataType, typename EdgeWeightType = uint32_t>
+template<typename VertexDataType, typename UpdateDataType, typename EdgeWeightType = uint32_t>
 class GraphTile {
 public:
+    typedef UpdateDataType UpdateType;
+
     typedef Vertex<VertexDataType> VertexType;
     typedef Edge<EdgeWeightType> EdgeType;
+    typedef MirrorVertex<UpdateDataType> MirrorVertexType;
 
     typedef std::unordered_map< VertexIdx, Ptr<VertexType>, std::hash<VertexIdx::Type> > VertexMap;
     typedef std::vector< EdgeType > EdgeList;
+    typedef std::unordered_map< VertexIdx, Ptr<MirrorVertexType>, std::hash<VertexIdx::Type> > MirrorVertexMap;
 
     typedef typename EdgeList::iterator EdgeIter;
     typedef typename EdgeList::const_iterator EdgeConstIter;
+    typedef typename MirrorVertexMap::iterator MirrorVertexIter;
+    typedef typename MirrorVertexMap::const_iterator MirrorVertexConstIter;
 
 public:
     explicit GraphTile(const TileIdx& tid)
@@ -152,6 +197,31 @@ public:
 
     size_t vertexCount() const { return vertices_.size(); }
 
+    /* Mirror vertices. */
+
+    Ptr<MirrorVertexType> mirrorVertex(const VertexIdx& vid) {
+        auto it = mirrorVertices_.find(vid);
+        if (it != mirrorVertices_.end()) {
+            return it->second;
+        } else {
+            return nullptr;
+        }
+    }
+
+    inline MirrorVertexConstIter mirrorVertexIter() const {
+        return mirrorVertices_.cbegin();
+    }
+    inline MirrorVertexConstIter mirrorVertexIterEnd() const {
+        return mirrorVertices_.cend();
+    }
+
+    inline MirrorVertexIter mirrorVertexIter() {
+        return mirrorVertices_.begin();
+    }
+    inline MirrorVertexIter mirrorVertexIterEnd() {
+        return mirrorVertices_.end();
+    }
+
     /* Edges. */
 
     void edgeNew(const VertexIdx& srcId, const VertexIdx& dstId, const TileIdx& dstTileId, const EdgeWeightType& weight) {
@@ -163,9 +233,14 @@ public:
         if (dstTileId == tid_ && vertices_.count(dstId) == 0) {
             throw RangeException(std::to_string(dstId));
         }
+        if (dstTileId != tid_) {
+            // Create mirror vertex if destination vertex is in different tile.
+            auto mirrorVertex = Ptr<MirrorVertexType>(new MirrorVertexType(dstId, dstTileId));
+            mirrorVertices_.insert( typename MirrorVertexMap::value_type(dstId, mirrorVertex) );
+        }
         // Repeating edges with the same srcId and dstId are accepted.
         // Use move constructor.
-        edges_.push_back(EdgeType(srcId, dstId, dstTileId, weight));
+        edges_.push_back(EdgeType(srcId, dstId, weight));
         edgeSorted_ &= EdgeType::lessFunc(edges_[edges_.size()-2], edges_[edges_.size()-1]);
     }
 
@@ -198,6 +273,8 @@ private:
 
     VertexMap vertices_;
     EdgeList edges_;
+
+    MirrorVertexMap mirrorVertices_;
 
     bool edgeSorted_;
 
