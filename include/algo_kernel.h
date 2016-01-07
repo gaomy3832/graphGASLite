@@ -11,14 +11,13 @@ enum class AlgoKernelTag {
     VertexCentric,
 };
 
+class IterCountRepType;
+typedef CountType<uint64_t, IterCountRepType> IterCount;
+
+static constexpr auto INF_ITER_COUNT = std::numeric_limits<typename IterCount::Type>::max();
+
 template<typename GraphTileType>
 class BaseAlgoKernel {
-public:
-    class IterCountRepType;
-    typedef CountType<uint64_t, IterCountRepType> IterCount;
-
-    static constexpr auto INF_ITER_COUNT = std::numeric_limits<typename IterCount::Type>::max();
-
 public:
     /**
      * Algorithm kernel name.
@@ -145,7 +144,6 @@ class EdgeCentricAlgoKernel : public BaseAlgoKernel<GraphTileType> {
 public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
-    using typename BaseAlgoKernel<GraphTileType>::IterCount;
 
 public:
     AlgoKernelTag tag() const final {
@@ -194,7 +192,6 @@ class VertexCentricAlgoKernel : public BaseAlgoKernel<GraphTileType> {
 public:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
-    using typename BaseAlgoKernel<GraphTileType>::IterCount;
 
 public:
     AlgoKernelTag tag() const final {
