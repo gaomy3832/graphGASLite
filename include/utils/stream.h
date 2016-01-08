@@ -73,6 +73,10 @@ class Stream {
             stream.push_back(d);
         }
 
+        void put(Data&& d) {
+            stream.push_back(std::forward<Data>(d));
+        }
+
         void sort() {
             std::sort(stream.begin(), stream.end());
         }
