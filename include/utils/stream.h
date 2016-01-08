@@ -11,6 +11,10 @@
 template <typename Data>
 class Stream {
     public:
+        typedef typename std::vector<Data>::iterator StreamIter;
+        typedef typename std::vector<Data>::const_iterator StreamConstIter;
+
+    public:
         Stream(size_t num = 16) {
             stream.reserve(num);
         }
@@ -39,6 +43,15 @@ class Stream {
 
         Data& operator[](size_t idx) { return stream[idx]; }
         const Data& operator[](size_t idx) const { return stream[idx]; }
+
+        StreamIter begin() { return stream.begin(); }
+        StreamIter end() { return stream.end(); }
+
+        StreamConstIter begin() const { return stream.begin(); }
+        StreamConstIter end() const { return stream.end(); }
+
+        StreamConstIter cbegin() const { return stream.cbegin(); }
+        StreamConstIter cend() const { return stream.cend(); }
 
         /* Modifiers */
 
