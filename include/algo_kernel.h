@@ -18,6 +18,9 @@ static constexpr auto INF_ITER_COUNT = std::numeric_limits<typename IterCount::T
 
 template<typename GraphTileType>
 class BaseAlgoKernel {
+protected:
+    typedef CommSync<VertexIdx, typename GraphTileType::UpdateType> CommSyncType;
+
 public:
     /**
      * Algorithm kernel name.
@@ -65,7 +68,7 @@ public:
      * @param graph     Graph tile on which this kernel works.
      * @param cs        Utility for comm & sync.
      */
-    void operator()(Ptr<GraphTileType>& graph, CommSync& cs) const {
+    void operator()(Ptr<GraphTileType>& graph, CommSyncType& cs) const {
         // If need to print progress, i.e., verbose kernel and primary (index 0) tile.
         auto printProgress = verbose() && (graph->tid() == 0);
 
@@ -116,7 +119,7 @@ protected:
      *
      * @return          If converged in this tile.
      */
-    virtual bool onIteration(Ptr<GraphTileType>& graph, CommSync& cs, const IterCount& iter) const = 0;
+    virtual bool onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) const = 0;
 
 protected:
     string name_;
@@ -178,7 +181,8 @@ protected:
     gather(const IterCount& iter, Ptr<VertexType>& dst, const UpdateType& update) const = 0;
 
 protected:
-    bool onIteration(Ptr<GraphTileType>& graph, CommSync& cs, const IterCount& iter) const final;
+    using typename BaseAlgoKernel<GraphTileType>::CommSyncType;
+    bool onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) const final;
 
 protected:
     EdgeCentricAlgoKernel(const string& name)
@@ -236,7 +240,8 @@ protected:
     scatter(const IterCount& iter, Ptr<VertexType>& src) const = 0;
 
 protected:
-    bool onIteration(Ptr<GraphTileType>& graph, CommSync& cs, const IterCount& iter) const final;
+    using typename BaseAlgoKernel<GraphTileType>::CommSyncType;
+    bool onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) const final;
 
 protected:
     VertexCentricAlgoKernel(const string& name)

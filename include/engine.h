@@ -125,13 +125,14 @@ public:
         auto threadCount = graphTileCount();
 
         // Utility for communication and synchronization.
-        CommSync cs(threadCount);
+        typedef CommSync<VertexIdx, typename GraphTileType::UpdateType> CommSyncType;
+        CommSyncType cs(threadCount);
 
         // Construct thread input data.
         struct ThreadData {
             Ptr<GraphTileType> graphTile_;
             AlgoKernelList kernels_;
-            CommSync* cs_;
+            CommSyncType* cs_;
         };
         std::vector<ThreadData> threadData;
         for (auto graphTile : graphs_) {
