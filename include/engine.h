@@ -126,7 +126,8 @@ public:
 
         // Utility for communication and synchronization.
         typedef CommSync<VertexIdx, typename GraphTileType::UpdateType> CommSyncType;
-        CommSyncType cs(threadCount);
+        CommSyncType cs(threadCount,
+                typename CommSyncType::KeyValue(-1uL, typename GraphTileType::UpdateType()));
 
         // Construct thread input data.
         struct ThreadData {

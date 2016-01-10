@@ -44,9 +44,10 @@ public:
     typedef Stream<KeyValue> KeyValueStream;
 
 public:
-    explicit CommSync(const uint32_t threadCount)
-        : threadCount_(threadCount), bar_(threadCount),
-          barANDCurReduction_(true), barANDLastResult_(false)
+    explicit CommSync(const uint32_t threadCount, const KeyValue& endTag)
+        : threadCount_(threadCount),
+          bar_(threadCount), barANDCurReduction_(true), barANDLastResult_(false),
+          endTag_(endTag)
     {
         // Nothing else to do.
     }
@@ -120,6 +121,13 @@ private:
     // Used for barrierAND.
     bool barANDCurReduction_;
     bool barANDLastResult_;
+
+    /* Communication. */
+
+    /**
+     * End-of-message tag for communication.
+     */
+    const KeyValue endTag_;
 
 };
 
