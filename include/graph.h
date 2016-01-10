@@ -110,6 +110,7 @@ public:
     void weightIs(const EdgeWeightType& weight) {
         weight_ = weight;
     }
+    EdgeWeightType& weight() { return weight_; }
 
 private:
     VertexIdx srcId_;
