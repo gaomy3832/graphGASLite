@@ -60,22 +60,12 @@ public:
     /**
      * Synchronization barrier.
      */
-    void barrier() {
-        bar_.wait();
-    }
+    void barrier();
 
     /**
      * Synchronization barrier, also do an AND reduction.
      */
-    bool barrierAND(bool input) {
-        barANDCurReduction_ &= input;
-        auto scb = [this](){
-            barANDLastResult_ = barANDCurReduction_;
-            barANDCurReduction_ = true;
-        };
-        bar_.wait(scb);
-        return barANDLastResult_;
-    }
+    bool barrierAND(bool input);
 
     /**
      * Send a key-value pair from \c prodId to \c consId.
@@ -116,6 +106,10 @@ public:
 
 private:
     const uint32_t threadCount_;
+
+    /* Synchronization. */
+
+    // Barrier.
     bar_t bar_;
 
     // Used for barrierAND.
@@ -130,5 +124,25 @@ private:
     const KeyValue endTag_;
 
 };
+
+
+
+template<typename KType, typename VType>
+void CommSync<KType, VType>::
+barrier() {
+    bar_.wait();
+}
+
+template<typename KType, typename VType>
+bool CommSync<KType, VType>::
+barrierAND(bool input) {
+    barANDCurReduction_ &= input;
+    auto scb = [this](){
+        barANDLastResult_ = barANDCurReduction_;
+        barANDCurReduction_ = true;
+    };
+    bar_.wait(scb);
+    return barANDLastResult_;
+}
 
 #endif // COMM_SYNC_H_
