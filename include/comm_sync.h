@@ -49,7 +49,11 @@ public:
           bar_(threadCount), barANDCurReduction_(true), barANDLastResult_(false),
           endTag_(endTag)
     {
-        // Nothing else to do.
+        // Initialize communication streams.
+        streamLists_.resize(threadCount_);
+        for (auto& sl : streamLists_) {
+            sl.resize(threadCount_);
+        }
     }
 
     /**
@@ -123,6 +127,14 @@ private:
      */
     const KeyValue endTag_;
 
+    /**
+     * Each producer thread is associated with multiple streams, each of which
+     * is for a consumer thread.
+     *
+     * Indexed by [prodId][consId].
+     */
+    std::vector<std::vector<KeyValueStream>> streamLists_;
+
 };
 
 
@@ -143,6 +155,70 @@ barrierAND(bool input) {
     };
     bar_.wait(scb);
     return barANDLastResult_;
+}
+
+template<typename KType, typename VType>
+void CommSync<KType, VType>::
+keyValNew(const uint32_t prodId, const uint32_t consId,
+        const KeyType& key, const ValType& val) {
+    streamLists_[prodId][consId].put(KeyValue(key, val));
+}
+
+template<typename KType, typename VType>
+void CommSync<KType, VType>::
+endTagNew(const uint32_t prodId, const uint32_t consId) {
+    // Nothing to do.
+}
+
+template<typename KType, typename VType>
+void CommSync<KType, VType>::
+keyValProdDelAll(const uint32_t prodId) {
+    for (auto& s : streamLists_[prodId]) {
+        s.reset();
+    }
+}
+
+template<typename KType, typename VType>
+void CommSync<KType, VType>::
+keyValConsDelAll(const uint32_t consId) {
+    for (auto& sl : streamLists_) {
+        sl[consId].reset();
+    }
+}
+
+template<typename KType, typename VType>
+std::pair<std::vector<typename CommSync<KType, VType>::KeyValueStream>,
+    typename CommSync<KType, VType>::RecvStatusType> CommSync<KType, VType>::
+keyValPartitions(const uint32_t consId, const size_t partitionCount,
+        std::function<size_t(const KeyType&)> partitionFunc) {
+
+    std::vector<KeyValueStream> prtns(partitionCount);
+
+    // Take barrier to ensure all threads have finished sending all data.
+    barrier();
+
+    // Local stream.
+    if (partitionCount == 1) {
+        prtns[0].swap(streamLists_[consId][consId]);
+    } else {
+        for (const auto& kv : streamLists_[consId][consId]) {
+            auto pid = partitionFunc(kv.key()) % partitionCount;
+            prtns[pid].put(kv);
+        }
+    }
+
+    // Remote streams.
+    for (uint32_t prodId = 0; prodId < threadCount_; prodId++) {
+        // Skip local stream.
+        if (prodId == consId) continue;
+
+        for (const auto& kv : streamLists_[prodId][consId]) {
+            auto pid = partitionFunc(kv.key()) % partitionCount;
+            prtns[pid].put(kv);
+        }
+    }
+
+    return std::make_pair(std::move(prtns), RECV_FINISHED);
 }
 
 #endif // COMM_SYNC_H_
