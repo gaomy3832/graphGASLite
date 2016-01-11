@@ -15,6 +15,9 @@ typedef IndexType<uint64_t, EdgeIdxRepType> EdgeIdx;
 class TileIdxRepType;
 typedef IndexType<uint64_t, TileIdxRepType> TileIdx;
 
+class DegreeRepType;
+typedef CountType<uint32_t, DegreeRepType> DegreeCount;
+
 template<typename VertexDataType, typename UpdateDataType, typename EdgeWeightType>
 class GraphTile;
 
@@ -163,6 +166,8 @@ public:
     typedef std::vector< EdgeType > EdgeList;
     typedef std::unordered_map< VertexIdx, Ptr<MirrorVertexType>, std::hash<VertexIdx::Type> > MirrorVertexMap;
 
+    typedef typename VertexMap::iterator VertexIter;
+    typedef typename VertexMap::const_iterator VertexConstIter;
     typedef typename EdgeList::iterator EdgeIter;
     typedef typename EdgeList::const_iterator EdgeConstIter;
     typedef typename MirrorVertexMap::iterator MirrorVertexIter;
@@ -197,6 +202,20 @@ public:
     }
 
     size_t vertexCount() const { return vertices_.size(); }
+
+    inline VertexConstIter vertexIter() const {
+        return vertices_.cbegin();
+    }
+    inline VertexConstIter vertexIterEnd() const {
+        return vertices_.cend();
+    }
+
+    inline VertexIter vertexIter() {
+        return vertices_.begin();
+    }
+    inline VertexIter vertexIterEnd() {
+        return vertices_.end();
+    }
 
     /* Mirror vertices. */
 
