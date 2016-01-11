@@ -2,4 +2,7 @@
 *.o
 lib/
 
+googletest/
+tests/bin/
+
 *.class
