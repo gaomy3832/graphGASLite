@@ -1,6 +1,7 @@
 #ifndef ALGO_KERNEL_H_
 #define ALGO_KERNEL_H_
 
+#include <chrono>
 #include <limits>
 #include "comm_sync.h"
 #include "graph.h"
@@ -250,5 +251,102 @@ protected:
         // Nothing else to do.
     }
 };
+
+
+
+template<typename GraphTileType>
+bool EdgeCentricAlgoKernel<GraphTileType>::
+onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) const {
+
+    const auto tid = graph->tid();
+
+    // As there is no explicit barrier in each iteration, the earliest time
+    // when the producer can know it is safe to reset comm. utility, is at the
+    // beginning of the next iteration after the barrier b/w iterations.
+    cs.keyValProdDelAll(tid);
+
+    // Scatter.
+    Ptr<VertexType> cachedSrc = nullptr;
+    VertexIdx cachedSrcId(-1);
+    for (auto edgeIter = graph->edgeIter(); edgeIter != graph->edgeIterEnd(); ++edgeIter) {
+        const auto srcId = edgeIter->srcId();
+        const auto dstId = edgeIter->dstId();
+        // Return reference to allow update to weight.
+        auto& weight = edgeIter->weight();
+
+        // Cache the src to save vertex map search because edges are sorted by the src vertex.
+        if (srcId != cachedSrcId) {
+            cachedSrc = graph->vertex(srcId);
+            cachedSrcId = srcId;
+        }
+
+        // Scatter.
+        auto ret = scatter(iter, cachedSrc, weight);
+        if (ret.second) {
+            const auto& update = ret.first;
+            if (graph->vertex(dstId) != nullptr) {
+                // Local destination.
+                cs.keyValNew(tid, tid, dstId, update);
+            } else {
+                // Remote destination, use mirror vertex.
+                auto mv = graph->mirrorVertex(dstId);
+                mv->updateNew(update);
+            }
+        }
+    }
+
+    // Send data.
+    for (auto mvIter = graph->mirrorVertexIter(); mvIter != graph->mirrorVertexIterEnd(); ++mvIter) {
+        auto mv = mvIter->second;
+        const auto dstTileId = mv->masterTileId();
+        const auto dstId = mv->vid();
+        const auto& accUpdate = mv->accUpdate();
+        cs.keyValNew(tid, dstTileId, dstId, accUpdate);
+        // Clear updates in mirror vertex.
+        mv->updateDelAll();
+    }
+
+    for (uint32_t idx = 0; idx < cs.threadCount(); idx++) {
+        cs.endTagNew(tid, idx);
+    }
+
+    // Receive data and gather.
+    bool converged = true;
+    auto hf = std::hash<VertexIdx::Type>();
+    auto dstIdHash = [&hf](const VertexIdx& k) {
+        return hf(k);
+    };
+    while (true) {
+        auto recvData = cs.keyValPartitions(tid, this->numParts(), dstIdHash);
+        const auto& updatePartitions = recvData.first;
+        auto recvStatus = recvData.second;
+
+        if (recvStatus == CommSyncType::RECV_NONE) {
+            // Sleep shortly to wait for data.
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            continue;
+        }
+
+        // For each subpartition ...
+        for (const auto& prtn : updatePartitions) {
+            // For each update ...
+            for (const auto& u : prtn) {
+                const auto dstId = u.key();
+                const auto& update = u.val();
+
+                // Gather.
+                auto dst = graph->vertex(dstId);
+                converged &= !gather(iter, dst, update);
+            }
+        }
+
+        // Finish receiving.
+        if (recvStatus == CommSyncType::RECV_FINISHED) break;
+    }
+
+    cs.keyValConsDelAll(tid);
+
+    return converged;
+}
 
 #endif // ALGO_KERNEL_H_
