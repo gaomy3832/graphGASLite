@@ -60,7 +60,12 @@ clean_gtest:
 	rm -rf $(GTEST_REPO)
 
 
-.PHONY: clean clean_gtest
+## Run tests
+run_all: $(GTEST_LIB) $(BINS)
+	@for b in `ls $(BIN_DIR)/*`; do $$b || exit; done
+
+
+.PHONY: clean clean_gtest run_all
 
 -include $(DEPS)
 
