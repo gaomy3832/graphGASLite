@@ -20,7 +20,9 @@ override LDFLAGS += $(CXX_LANG) $(CXX_DEBUG) $(LIB_OPTS) \
 
 ## Tests
 TESTS += \
-		 comm_sync
+		 comm_sync \
+		 engine \
+
 
 
 ## Test build rules
