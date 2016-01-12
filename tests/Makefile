@@ -12,9 +12,9 @@ GTEST_LIB  = $(GTEST_BASE)/make/gtest_main.a
 
 ## Google Test additional flags.
 CXX_DEBUG = -g
-override CXXFLAGS += $(CXX_LANG) $(CXX_DEBUG) $(INC_OPTS) \
+CXXFLAGS = $(CXX_LANG) $(CXX_DEBUG) $(INC_OPTS) $(CL_CXXFLAGS) \
 	-I$(GTEST_PATH)
-override LDFLAGS += $(CXX_LANG) $(CXX_DEBUG) $(LIB_OPTS) \
+LDFLAGS  = $(CXX_LANG) $(CXX_DEBUG) $(LIB_OPTS) $(CL_LDFLAGS) \
 	$(GTEST_LIB) -lpthread
 
 

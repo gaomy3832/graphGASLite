@@ -16,10 +16,14 @@ MT_OPTS = -pthread -Wl,--no-as-needed
 
 CXX_LANG = -Wall -Wextra -pedantic -std=c++11 $(MT_OPTS)
 CXX_OPT  = -O3 -funroll-loops -march=native -flto
-#CXX_OPT = -g -fkeep-inline-functions
+CXX_DBG  = -g -fkeep-inline-functions
 INC_OPTS = -I$(HOMEDIR)/include
 LIB_OPTS =
 
-override CXXFLAGS += $(CXX_LANG) $(CXX_OPT) $(INC_OPTS)
-override LDFLAGS  += $(CXX_LANG) $(CXX_OPT) $(LIB_OPTS)
+# User-supply flags through command line arguments
+CL_CXXFLAGS =
+CL_LDFLAGS  =
+
+CXXFLAGS = $(CXX_LANG) $(CXX_OPT) $(INC_OPTS) $(CL_CXXFLAGS)
+LDFLAGS  = $(CXX_LANG) $(CXX_OPT) $(LIB_OPTS) $(CL_LDFLAGS)
 
