@@ -7,6 +7,8 @@
 #include <vector>
 #include "graph.h"
 
+namespace GraphGASLite {
+
 namespace GraphIOUtil {
 
 // Get the next line until a non-commented, non-empty line.
@@ -134,5 +136,7 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
 }
 
 } // namespace GraphIOUtil
+
+} // namespace GraphGASLite
 
 #endif // GRAPH_UTIL_H_

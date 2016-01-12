@@ -5,6 +5,8 @@
 #include <string>
 #include "utils/exception.h"
 
+namespace GraphGASLite {
+
 using std::string;
 
 template<typename T>
@@ -102,5 +104,7 @@ public:
 private:
     UnitType cnt_;
 };
+
+} // namespace GraphGASLite
 
 #endif // COMMON_H_

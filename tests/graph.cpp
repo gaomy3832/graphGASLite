@@ -3,6 +3,8 @@
 #include "graph_io_util.h"
 #include "test_graph_types.h"
 
+using namespace GraphGASLite;
+
 class GraphTest : public ::testing::Test {
 public:
     typedef TestGraphTile::VertexType TestVertexType;

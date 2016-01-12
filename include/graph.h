@@ -6,6 +6,8 @@
 #include <vector>
 #include "common.h"
 
+namespace GraphGASLite {
+
 class VertexIdxRepType;
 typedef IndexType<uint64_t, VertexIdxRepType> VertexIdx;
 
@@ -306,5 +308,7 @@ private:
     bool operator==(const GraphTile&) const = delete;
 
 };
+
+} // namespace GraphGASLite
 
 #endif // GRAPH_H_

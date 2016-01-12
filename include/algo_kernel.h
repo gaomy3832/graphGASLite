@@ -6,6 +6,8 @@
 #include "comm_sync.h"
 #include "graph.h"
 
+namespace GraphGASLite {
+
 enum class AlgoKernelTag {
     Invalid,
     EdgeCentric,
@@ -348,5 +350,7 @@ onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) 
 
     return converged;
 }
+
+} // namespace GraphGASLite
 
 #endif // ALGO_KERNEL_H_

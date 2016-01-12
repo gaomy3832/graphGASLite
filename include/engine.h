@@ -9,6 +9,8 @@
 #include "comm_sync.h"
 #include "graph.h"
 
+namespace GraphGASLite {
+
 template<typename GraphTileType, AlgoKernelTag akTag>
 class Engine {
 public:
@@ -166,5 +168,7 @@ protected:
     AlgoKernelList kernels_;
 
 };
+
+} // namespace GraphGASLite
 
 #endif // ENGINE_H_

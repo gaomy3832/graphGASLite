@@ -2,6 +2,8 @@
 #include "utils/thread_pool.h"
 #include "comm_sync.h"
 
+using namespace GraphGASLite;
+
 class CommSyncTest : public ::testing::Test {
 public:
     typedef CommSync<uint32_t, double> CommSyncType;

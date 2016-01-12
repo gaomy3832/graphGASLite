@@ -4,6 +4,8 @@
 #include "utils/stream.h"
 #include "utils/threads.h"
 
+namespace GraphGASLite {
+
 template<typename KType, typename VType>
 class CommSync {
 public:
@@ -220,5 +222,7 @@ keyValPartitions(const uint32_t consId, const size_t partitionCount,
 
     return std::make_pair(std::move(prtns), RECV_FINISHED);
 }
+
+} // namespace GraphGASLite
 
 #endif // COMM_SYNC_H_

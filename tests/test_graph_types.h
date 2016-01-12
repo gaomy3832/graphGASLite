@@ -1,6 +1,10 @@
 #ifndef TESTS_TEST_GRAPH_TYPES_H_
 #define TESTS_TEST_GRAPH_TYPES_H_
 
+#include "graph.h"
+
+using namespace GraphGASLite;
+
 class TestData {
 public:
     TestData(const VertexIdx& vid, const double x) : x_(x) {}

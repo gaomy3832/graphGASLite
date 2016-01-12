@@ -3,6 +3,8 @@
 #include "graph_io_util.h"
 #include "test_graph_types.h"
 
+using namespace GraphGASLite;
+
 class AK1 : public EdgeCentricAlgoKernel<TestGraphTile> {
 public:
     AK1() : EdgeCentricAlgoKernel<TestGraphTile>("ak1") {
