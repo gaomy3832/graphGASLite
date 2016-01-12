@@ -34,8 +34,9 @@ DEPS = $(OBJS:.o=.d)
 
 all: $(GTEST_LIB) $(BINS)
 
+# $(BIN_DIR) is an order-only prerequisite
 define compile_rule
-$(BIN_DIR)/$1: $1.o $(BIN_DIR)
+$(BIN_DIR)/$1: $1.o | $(BIN_DIR)
 	$$(CXX) $$< -o $$@ $$(CXXFLAGS) $$(LDFLAGS)
 endef
 $(foreach TEST,$(TESTS),$(eval $(call compile_rule,$(TEST))))
