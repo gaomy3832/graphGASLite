@@ -7,84 +7,45 @@
 #include <vector>
 #include "graph.h"
 
-template<typename GraphTileType>
-class GraphIOUtil {
-public:
-    typedef typename GraphTileType::VertexType VertexType;
-    typedef typename GraphTileType::EdgeType EdgeType;
+namespace GraphIOUtil {
 
-    typedef typename EdgeType::WeightType EdgeWeightType;
+// Get the next line until a non-commented, non-empty line.
+inline static std::istream& nextEffectiveLine(std::istream& input, string& line) {
+    do {
+        std::getline(input, line);
+    } while (input && (line.empty() || line.at(0) == '#'));
+    return input;
+}
 
-public:
-    GraphIOUtil(const EdgeWeightType& defaultWeight, const uint32_t tileMergeFactor = 1)
-        : defaultWeight_(defaultWeight), tileMergeFactor_(tileMergeFactor)
-    {
-        // Nothing else to do.
-    }
-
-    /**
-     * The default edge weight value.
-     *
-     * If no weight is given in the edge list file, then this value is used.
-     */
-    inline EdgeWeightType defaultWeight() const { return defaultWeight_; }
-
-    /**
-     * The factor for tile merge.
-     *
-     * The actual tile index of a vertex will be the index in the partition file
-     * divided by this factor.
-     */
-    inline uint32_t tileMergeFactor() const { return tileMergeFactor_; }
-
-    /**
-     * Read graph topology from edge list file (and partition file). Partition
-     * file name can be empty string, which means the graph is not partitioned
-     * (only one tile).
-     *
-     * The tile vector must be sized and allocated before calling this function.
-     *
-     * Other arguments are used to construct the vertex.
-     */
-    template<typename... Args>
-    void inputIs(std::vector< Ptr<GraphTileType> >& tiles,
-            const string& edgeListFileName, const string& partitionFileName,
-            Args&&... vertexArgs);
-
-    /**
-     * Write graph data to file.
-     *
-     * Default is doing nothing.
-     */
-    virtual void outputIs(std::vector< Ptr<GraphTileType> >& tiles,
-            const string& outFileName) { }
-
-protected:
-    const EdgeWeightType defaultWeight_;
-    const uint32_t tileMergeFactor_;
-
-protected:
-    /**
-     * Get the next line until a non-commented, non-empty line.
-     */
-    inline static std::istream& nextEffectiveLine(std::istream& input, string& line) {
-        do {
-            std::getline(input, line);
-        } while (input && (line.empty() || line.at(0) == '#'));
-        return input;
-    }
-
-};
-
-
-template<typename GraphTileType>
-template<typename... Args>
-void GraphIOUtil<GraphTileType>::inputIs(std::vector< Ptr<GraphTileType> >& tiles,
+/**
+ * Read graph topology from edge list file (and partition file).
+ *
+ * @param tileCount             Number of graph tiles.
+ * @param edgeListFileName      graph topology file in edge list format.
+ * @param partitionFileName     Partition file name can be empty string, which means
+ *                              the graph is not partitioned (only one tile).
+ * @param defaultWeight         The default edge weight value, used when no weight
+ *                              is given in the edge list file.
+ * @param tileMergeFactor       The factor for tile merge. The actual tile index of
+ *                              a vertex will be the index in the partition file
+ *                              divided by this factor.
+ * @param vertexArgs            Used by vertex constructor.
+ *
+ * @return                      graph tiles.
+ */
+template<typename GraphTileType, typename... Args>
+std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
         const string& edgeListFileName, const string& partitionFileName,
+        const typename GraphTileType::EdgeType::WeightType& defaultWeight,
+        const size_t tileMergeFactor,
         Args&&... vertexArgs) {
 
     try{
-        auto tileCount = tiles.size();
+        std::vector< Ptr<GraphTileType> > tiles(tileCount);
+        for (size_t tid = 0; tid < tileCount; tid++) {
+            tiles[tid].reset(new GraphTileType(tid));
+        }
+
         bool partitioned = (tileCount != 1);
 
         // Read vertices and their partitioned tile number, build the map.
@@ -107,7 +68,7 @@ void GraphIOUtil<GraphTileType>::inputIs(std::vector< Ptr<GraphTileType> >& tile
                     throw FileException(partitionFileName);
                 }
                 // Merge tiles.
-                tid /= tileMergeFactor();
+                tid /= tileMergeFactor;
                 if (tid >= tileCount) {
                     throw RangeException(std::to_string(tid));
                 }
@@ -139,13 +100,13 @@ void GraphIOUtil<GraphTileType>::inputIs(std::vector< Ptr<GraphTileType> >& tile
             std::istringstream iss(line);
             uint64_t srcId = 0;
             uint64_t dstId = 0;
-            EdgeWeightType weight;
+            typename GraphTileType::EdgeType::WeightType weight;
             // Line format: <srcId> <dstId> [weight]
             if (!(iss >> srcId >> dstId)) {
                 throw FileException(partitionFileName);
             }
             if (!(iss >> weight)) {
-                weight = defaultWeight();
+                weight = defaultWeight;
             }
             // Get corresponding tile and add vertex.
             const auto srcTid = vertexTileIdx(srcId);
@@ -165,9 +126,13 @@ void GraphIOUtil<GraphTileType>::inputIs(std::vector< Ptr<GraphTileType> >& tile
             t->edgeSortedIs(true);
         }
 
+        return tiles;
+
     } catch (...) {
         throw FileException("Invalid format in graph topology input files.");
     }
 }
+
+} // namespace GraphIOUtil
 
 #endif // GRAPH_UTIL_H_
