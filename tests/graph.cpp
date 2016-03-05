@@ -15,6 +15,18 @@ protected:
                     2, "test_graphs/small.dat", "test_graphs/small.part", 0, 1, 0);
     }
 
+    void degreeSync() {
+        for (auto& g : graphs_) {
+            for (auto mvIter = g->mirrorVertexIter(); mvIter != g->mirrorVertexIterEnd(); ++mvIter) {
+                auto mv = mvIter->second;
+                auto vid = mv->vid();
+                auto masterTid = mv->masterTileId();
+                graphs_[masterTid]->vertex(vid)->inDegInc(mv->accDeg());
+                mv->accDegDel();
+            }
+        }
+    }
+
     std::vector<Ptr<TestGraphTile>> graphs_;
 };
 
@@ -124,5 +136,102 @@ TEST_F(GraphTest, edgeSorted) {
     ASSERT_FALSE(g->edgeSorted());
     g->edgeSortedIs(true);
     ASSERT_TRUE(g->edgeSorted());
+}
+
+TEST_F(GraphTest, degreeBeforeSync) {
+    auto v0 = graphs_[0]->vertex(0);
+    auto v1 = graphs_[0]->vertex(1);
+    auto v2 = graphs_[1]->vertex(2);
+    auto v3 = graphs_[1]->vertex(3);
+
+    ASSERT_EQ(DegreeCount(1), v0->outDeg());
+    ASSERT_EQ(DegreeCount(2), v1->outDeg());
+    ASSERT_EQ(DegreeCount(2), v2->outDeg());
+    ASSERT_EQ(DegreeCount(1), v3->outDeg());
+
+    ASSERT_EQ(DegreeCount(0), v0->inDeg());
+    ASSERT_EQ(DegreeCount(1), v1->inDeg());
+    ASSERT_EQ(DegreeCount(0), v2->inDeg());
+    ASSERT_EQ(DegreeCount(1), v3->inDeg());
+
+    auto mv0 = graphs_[1]->mirrorVertex(0);
+    ASSERT_TRUE(nullptr == graphs_[1]->mirrorVertex(1));
+    auto mv2 = graphs_[0]->mirrorVertex(2);
+    auto mv3 = graphs_[0]->mirrorVertex(3);
+    ASSERT_EQ(DegreeCount(2), mv0->accDeg());
+    ASSERT_EQ(DegreeCount(1), mv2->accDeg());
+    ASSERT_EQ(DegreeCount(1), mv3->accDeg());
+}
+
+TEST_F(GraphTest, finalizedFail) {
+    auto g = graphs_[0];
+    ASSERT_FALSE(g->finalized());
+    try {
+        g->finalizedIs(true);
+    } catch (PermissionException& e) {
+        ASSERT_FALSE(g->finalized());
+        return;
+    }
+
+    // Never reached.
+    ASSERT_TRUE(false);
+}
+
+TEST_F(GraphTest, degree) {
+    degreeSync();
+
+    auto v0 = graphs_[0]->vertex(0);
+    auto v1 = graphs_[0]->vertex(1);
+    auto v2 = graphs_[1]->vertex(2);
+    auto v3 = graphs_[1]->vertex(3);
+
+    ASSERT_EQ(DegreeCount(1), v0->outDeg());
+    ASSERT_EQ(DegreeCount(2), v1->outDeg());
+    ASSERT_EQ(DegreeCount(2), v2->outDeg());
+    ASSERT_EQ(DegreeCount(1), v3->outDeg());
+
+    ASSERT_EQ(DegreeCount(2), v0->inDeg());
+    ASSERT_EQ(DegreeCount(1), v1->inDeg());
+    ASSERT_EQ(DegreeCount(1), v2->inDeg());
+    ASSERT_EQ(DegreeCount(2), v3->inDeg());
+}
+
+TEST_F(GraphTest, finalized) {
+    degreeSync();
+
+    auto g = graphs_[0];
+    ASSERT_FALSE(g->finalized());
+    g->finalizedIs(true);
+    ASSERT_TRUE(g->finalized());
+    ASSERT_TRUE(g->edgeSorted());
+}
+
+TEST_F(GraphTest, changeAfterinalized) {
+    degreeSync();
+    auto g = graphs_[0];
+    g->finalizedIs(true);
+
+    // Accessor is allowed.
+    ASSERT_EQ(2, g->vertexCount());
+    ASSERT_TRUE(nullptr != g->vertex(0));
+
+    // Mutator is disallowed.
+    try {
+        graphs_[0]->vertexNew(10, 0);
+    } catch (PermissionException& e) {
+        goto try2;
+    }
+
+    // Never reached.
+    ASSERT_TRUE(false);
+
+try2: try {
+        g->edgeNew(1, 0, 0, 10);
+    } catch (PermissionException& e) {
+        return;
+    }
+
+    // Never reached.
+    ASSERT_TRUE(false);
 }
 
