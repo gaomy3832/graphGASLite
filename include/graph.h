@@ -30,11 +30,22 @@ public:
 
     VertexIdx vid() const { return vid_; }
 
+    DegreeCount inDeg() const { return inDeg_; }
+    DegreeCount outDeg() const { return outDeg_; }
+    void inDegInc(const DegreeCount& d = 1u) {
+        inDeg_ += d;
+    }
+    void outDegInc(const DegreeCount& d = 1u) {
+        outDeg_ += d;
+    }
+
     VertexDataType& data() { return data_; }
     const VertexDataType& data() const { return data_; }
 
 private:
     const VertexIdx vid_;
+    DegreeCount inDeg_;
+    DegreeCount outDeg_;
     VertexDataType data_;
 
 private:
@@ -43,7 +54,8 @@ private:
 
     template<typename... Args>
     explicit Vertex(const VertexIdx& vid, Args&&... args)
-        : vid_(vid), data_(vid, std::forward<Args>(args)...)
+        : vid_(vid), inDeg_(0), outDeg_(0),
+          data_(vid, std::forward<Args>(args)...)
     {
         // Nothing else to do.
     }
@@ -80,20 +92,39 @@ public:
         accUpdate_ = UpdateType();
     }
 
+    /**
+     * When sync vertex degree with other tiles, clear the mirror vertex
+     * acc degree after propagating to master vertex.
+     */
+    DegreeCount accDeg() const { return accDeg_; }
+    void accDegDel() {
+        accDeg_ = 0;
+        accUpdate_ = UpdateType();
+    }
+
 protected:
     const VertexIdx vid_;
     const TileIdx masterTileId_;
+
+    union {
     UpdateType accUpdate_;
+    // Only used at vertex degree initialization. Must be cleared before real processing.
+    DegreeCount accDeg_;
+    };
 
 protected:
     template<typename VDT, typename UDT, typename EWT>
     friend class GraphTile;
 
-    template<typename... Args>
-    MirrorVertex(const VertexIdx& vid, const TileIdx& masterTileId, Args&&... args)
-        : vid_(vid), masterTileId_(masterTileId), accUpdate_(std::forward<Args>(args)...)
+    MirrorVertex(const VertexIdx& vid, const TileIdx& masterTileId)
+        : vid_(vid), masterTileId_(masterTileId), accDeg_(0)
+          // accUpdate_ initialized after accDeg_ is used.
     {
         // Nothing else to do.
+    }
+
+    void accDegInc(const DegreeCount& d = 1u) {
+        accDeg_ += d;
     }
 
     MirrorVertex(const MirrorVertex&) = delete;
@@ -264,6 +295,13 @@ public:
         // Use move constructor.
         edges_.push_back(EdgeType(srcId, dstId, weight));
         edgeSorted_ &= EdgeType::lessFunc(edges_[edges_.size()-2], edges_[edges_.size()-1]);
+        // Increment degree.
+        vertex(srcId)->outDegInc();
+        if (dstTileId != tid_) {
+            mirrorVertex(dstId)->accDegInc();
+        } else {
+            vertex(dstId)->inDegInc();
+        }
     }
 
     bool edgeSorted() const { return edgeSorted_; }
