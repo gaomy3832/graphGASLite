@@ -208,7 +208,7 @@ public:
 
 public:
     explicit GraphTile(const TileIdx& tid)
-        : tid_(tid), vertices_(), edges_(), edgeSorted_(false)
+        : tid_(tid), vertices_(), edges_(), edgeSorted_(false), finalized_(false)
     {
         // Nothing else to do.
     }
@@ -219,13 +219,14 @@ public:
 
     template<typename... Args>
     void vertexNew(const VertexIdx& vid, Args&&... args) {
+        checkNotFinalized(__func__);
         auto vertex = Ptr<VertexType>(new VertexType(vid, std::forward<Args>(args)...));
         if (vertices_.insert( typename VertexMap::value_type(vid, vertex) ).second == false) {
             throw KeyInUseException(std::to_string(vid));
         }
     }
 
-    Ptr<VertexType> vertex(const VertexIdx& vid) {
+    Ptr<VertexType> vertex(const VertexIdx& vid) const {
         auto it = vertices_.find(vid);
         if (it != vertices_.end()) {
             return it->second;
@@ -252,7 +253,7 @@ public:
 
     /* Mirror vertices. */
 
-    Ptr<MirrorVertexType> mirrorVertex(const VertexIdx& vid) {
+    Ptr<MirrorVertexType> mirrorVertex(const VertexIdx& vid) const {
         auto it = mirrorVertices_.find(vid);
         if (it != mirrorVertices_.end()) {
             return it->second;
@@ -278,6 +279,7 @@ public:
     /* Edges. */
 
     void edgeNew(const VertexIdx& srcId, const VertexIdx& dstId, const TileIdx& dstTileId, const EdgeWeightType& weight) {
+        checkNotFinalized(__func__);
         // Source vertex must be in this tile.
         if (vertices_.count(srcId) == 0) {
             throw RangeException(std::to_string(srcId));
@@ -306,7 +308,7 @@ public:
 
     bool edgeSorted() const { return edgeSorted_; }
     void edgeSortedIs(bool sorted) {
-        if (sorted) {
+        if (!edgeSorted_ && sorted) {
             std::sort(edges_.begin(), edges_.end(), EdgeType::lessFunc);
             edgeSorted_ = true;
         }
@@ -328,6 +330,28 @@ public:
 
     size_t edgeCount() const { return edges_.size(); }
 
+    bool finalized() const { return finalized_; }
+    void finalizedIs(const bool finalized) {
+        if (!finalized_ && finalized) {
+            // Finalize the graph tile.
+
+            // Sort edge list.
+            edgeSortedIs(true);
+
+            // Check mirror vertex acc degree has been propagated to other tiles and cleared.
+            for (auto mvIter = mirrorVertexIter(); mvIter != mirrorVertexIterEnd(); ++mvIter) {
+                const auto mv = mvIter->second;
+                if (mv->accDeg() != 0) {
+                    throw PermissionException("Cannot finalize graph tile " + std::to_string(tid_)
+                            + " due to uncleared mirror vertex " + std::to_string(mv->vid())
+                            + " acc degree.");
+                }
+            }
+
+        }
+        finalized_ = finalized;
+    }
+
 private:
     const TileIdx tid_;
 
@@ -338,7 +362,21 @@ private:
 
     bool edgeSorted_;
 
+    /**
+     * Finalize graph tile to prevent further changes on graph structure.
+     * Any mutator to add/delete vertex/edge is not allowed after finalizing,
+     * unless explicitly de-finalize. However, mutators that do not change
+     * graph topology are allowed, e.g, edgeSortedIs().
+     */
+    bool finalized_;
+
 private:
+    void checkNotFinalized(const string& funcName) {
+        if (finalized_) {
+            throw PermissionException(funcName + ": Graph tile has already been finalized.");
+        }
+    }
+
     GraphTile(const GraphTile&) = delete;
     GraphTile& operator=(const GraphTile&) = delete;
     GraphTile(GraphTile&&) = delete;
