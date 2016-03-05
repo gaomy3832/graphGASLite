@@ -39,7 +39,7 @@ template<typename GraphTileType, typename... Args>
 std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
         const string& edgeListFileName, const string& partitionFileName,
         const typename GraphTileType::EdgeType::WeightType& defaultWeight,
-        const size_t tileMergeFactor,
+        const size_t tileMergeFactor, const bool finalize,
         Args&&... vertexArgs) {
 
     try{
@@ -123,9 +123,24 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
             tiles[srcTid]->edgeNew(srcId, dstId, dstTid, weight);
         }
 
-        // Sort the edges in each tile to increase locality.
-        for (auto t : tiles) {
-            t->edgeSortedIs(true);
+        if (finalize) {
+            // Finalize each tile.
+            for (auto& t : tiles) {
+                // Propagate mirror vertex degree to master tile.
+                for (auto mvIter = t->mirrorVertexIter(); mvIter != t->mirrorVertexIterEnd(); ++mvIter) {
+                    auto& mv = mvIter->second;
+                    auto vid = mv->vid();
+                    auto masterTileId = mv->masterTileId();
+                    tiles[masterTileId]->vertex(vid)->inDegInc(mv->accDeg());
+                    mv->accDegDel();
+                }
+                t->finalizedIs(true);
+            }
+        } else {
+            // Only sort edges.
+            for (auto& t : tiles) {
+                t->edgeSortedIs(true);
+            }
         }
 
         return tiles;
