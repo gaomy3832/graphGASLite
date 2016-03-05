@@ -41,7 +41,7 @@ protected:
     virtual void SetUp() {
         engine_ = new EngineType();
         engine_->graphTileIs(GraphIOUtil::graphTilesFromEdgeList<TestGraphTile>(
-                    2, "test_graphs/small.dat", "test_graphs/small.part", 0, 1, 0));
+                    2, "test_graphs/small.dat", "test_graphs/small.part", 0, 1, true, 0));
         engine_->algoKernelNew(Ptr<AK1>(new AK1));
         engine_->algoKernelNew(Ptr<AK2>(new AK2));
     }
