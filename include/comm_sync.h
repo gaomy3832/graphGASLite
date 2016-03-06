@@ -56,12 +56,12 @@ public:
     /**
      * Synchronization barrier.
      */
-    void barrier();
+    void barrier(const uint32_t threadId);
 
     /**
      * Synchronization barrier, also do an AND reduction.
      */
-    bool barrierAND(bool input);
+    bool barrierAND(const uint32_t threadId, bool input);
 
     /**
      * Send a key-value pair from \c prodId to \c consId.
@@ -147,13 +147,13 @@ CommSync(const uint32_t threadCount, const KeyValue& endTag)
 
 template<typename KType, typename VType>
 void CommSync<KType, VType>::
-barrier() {
+barrier(const uint32_t) {
     bar_.wait();
 }
 
 template<typename KType, typename VType>
 bool CommSync<KType, VType>::
-barrierAND(bool input) {
+barrierAND(const uint32_t, bool input) {
     barANDCurReduction_ &= input;
     auto scb = [this](){
         barANDLastResult_ = barANDCurReduction_;
@@ -201,7 +201,7 @@ keyValPartitions(const uint32_t consId, const size_t partitionCount,
     std::vector<KeyValueStream> prtns(partitionCount);
 
     // Take barrier to ensure all threads have finished sending all data.
-    barrier();
+    barrier(consId);
 
     // Local stream.
     if (partitionCount == 1) {

@@ -52,7 +52,7 @@ TEST_F(CommSyncTest, barrier) {
             ASSERT_EQ(iter, curIter);
             mutex_end();
 
-            cs->barrier();
+            cs->barrier(tid);
         }
     };
     RunTask(tf);
@@ -64,7 +64,7 @@ TEST_F(CommSyncTest, barrierAND) {
 
     auto tf = [&](uint32_t tid, CommSyncType* cs) {
         for (uint32_t iter = 0; iter < 4; iter++) {
-            auto output = cs->barrierAND(inputs[tid]);
+            auto output = cs->barrierAND(tid, inputs[tid]);
             ASSERT_EQ(expOutput, output);
         }
     };

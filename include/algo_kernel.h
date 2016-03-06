@@ -76,7 +76,7 @@ public:
         auto printProgress = verbose() && (graph->tid() == 0);
 
         // Start barrier, ensure all preparation is done in all threads.
-        cs.barrier();
+        cs.barrier(graph->tid());
 
         onAlgoKernelStart(graph);
 
@@ -88,7 +88,7 @@ public:
             if (printProgress) info("->%lu", iter.cnt());
 
             // Check if all tiles have converged.
-            allConverged = cs.barrierAND(converged);
+            allConverged = cs.barrierAND(graph->tid(), converged);
             iter++;
         }
         if (printProgress) info("Completed in %lu iterations", iter.cnt());
