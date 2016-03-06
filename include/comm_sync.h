@@ -48,10 +48,17 @@ public:
 public:
     explicit CommSync(const uint32_t threadCount, const KeyValue& endTag);
 
+    ~CommSync();
+
     /**
      * Number of threads.
      */
     uint32_t threadCount() const { return threadCount_; }
+
+    /**
+     * Thread register.
+     */
+    void threadIdIs(const uint32_t threadId);
 
     /**
      * Synchronization barrier.
@@ -143,6 +150,18 @@ CommSync(const uint32_t threadCount, const KeyValue& endTag)
     for (auto& sl : streamLists_) {
         sl.resize(threadCount_);
     }
+}
+
+template<typename KType, typename VType>
+CommSync<KType, VType>::
+~CommSync() {
+    // Nothing to do.
+}
+
+template<typename KType, typename VType>
+void CommSync<KType, VType>::
+threadIdIs(const uint32_t) {
+    // Nothing to do.
 }
 
 template<typename KType, typename VType>
