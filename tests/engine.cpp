@@ -15,7 +15,7 @@ protected:
         return std::make_pair<TestUpdate, bool>(0, false);
     }
     bool gather(const IterCount& iter, Ptr<VertexType>& dst, const TestUpdate& update) const {
-        return true;
+        return false;
     }
 };
 
@@ -29,7 +29,7 @@ protected:
         return std::make_pair<TestUpdate, bool>(0, false);
     }
     bool gather(const IterCount& iter, Ptr<VertexType>& dst, const TestUpdate& update) const {
-        return true;
+        return false;
     }
 };
 

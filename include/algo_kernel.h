@@ -178,7 +178,7 @@ protected:
      * @param dst       Destination vertex.
      * @param update    Input update data.
      *
-     * @return          Whether this vertex needs further update (not converged).
+     * @return          Whether this vertex is converged.
      */
     virtual bool
     gather(const IterCount& iter, Ptr<VertexType>& dst, const UpdateType& update) const = 0;
@@ -338,7 +338,7 @@ onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) 
 
                 // Gather.
                 auto dst = graph->vertex(dstId);
-                converged &= !gather(iter, dst, update);
+                converged &= gather(iter, dst, update);
             }
         }
 
