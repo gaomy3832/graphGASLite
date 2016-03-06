@@ -19,6 +19,7 @@ template<typename UnitType, typename RepType>
 struct IndexType {
 public:
     IndexType(const UnitType& idx) : idx_(idx) {}
+    IndexType() : idx_() {}
     operator UnitType() const { return idx_; }
     typedef UnitType Type;
 private:
