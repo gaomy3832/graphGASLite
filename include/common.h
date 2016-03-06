@@ -69,6 +69,16 @@ public:
         lhs -= rhs;
         return lhs;
     }
+    template<typename T>
+    friend T operator*(T lhs, const CountType& rhs) {
+        lhs *= rhs.cnt_;
+        return lhs;
+    }
+    template<typename T>
+    friend T operator/(T lhs, const CountType& rhs) {
+        lhs /= rhs.cnt_;
+        return lhs;
+    }
 
     /**
      * Prefix increment.
