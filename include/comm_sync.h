@@ -46,17 +46,7 @@ public:
     typedef Stream<KeyValue> KeyValueStream;
 
 public:
-    explicit CommSync(const uint32_t threadCount, const KeyValue& endTag)
-        : threadCount_(threadCount),
-          bar_(threadCount), barANDCurReduction_(true), barANDLastResult_(false),
-          endTag_(endTag)
-    {
-        // Initialize communication streams.
-        streamLists_.resize(threadCount_);
-        for (auto& sl : streamLists_) {
-            sl.resize(threadCount_);
-        }
-    }
+    explicit CommSync(const uint32_t threadCount, const KeyValue& endTag);
 
     /**
      * Number of threads.
@@ -140,6 +130,20 @@ private:
 };
 
 
+
+template<typename KType, typename VType>
+CommSync<KType, VType>::
+CommSync(const uint32_t threadCount, const KeyValue& endTag)
+    : threadCount_(threadCount),
+      bar_(threadCount), barANDCurReduction_(true), barANDLastResult_(false),
+      endTag_(endTag)
+{
+    // Initialize communication streams.
+    streamLists_.resize(threadCount_);
+    for (auto& sl : streamLists_) {
+        sl.resize(threadCount_);
+    }
+}
 
 template<typename KType, typename VType>
 void CommSync<KType, VType>::
