@@ -149,6 +149,7 @@ public:
 
         // Thread function.
         auto threadFunc = [](ThreadData& td) {
+            td.cs_->threadIdIs(td.graphTile_->tid());
             for (auto& k : td.kernels_) {
                 (*k)(td.graphTile_, *td.cs_);
             }
