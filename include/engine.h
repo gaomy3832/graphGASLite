@@ -148,8 +148,10 @@ public:
         }
 
         // Thread function.
-        auto threadFunc = [](ThreadData& td) {
+        auto threadRegisterFunc = [](ThreadData& td) {
             td.cs_->threadIdIs(td.graphTile_->tid());
+        };
+        auto threadFunc = [](ThreadData& td) {
             for (auto& k : td.kernels_) {
                 (*k)(td.graphTile_, *td.cs_);
             }
@@ -158,9 +160,12 @@ public:
         // Thread pool.
         ThreadPool pool(threadCount);
         for (auto& td : threadData) {
+            pool.add_task(std::bind(threadRegisterFunc, td));
+        }
+        pool.wait_all();
+        for (auto& td : threadData) {
             pool.add_task(std::bind(threadFunc, td));
         }
-
         pool.wait_all();
     }
 
