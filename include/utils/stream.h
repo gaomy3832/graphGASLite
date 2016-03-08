@@ -56,11 +56,10 @@ class Stream {
         /* Modifiers */
 
         void reset(size_t num = 16) {
-            decltype(stream) temp;
-            temp.reserve(num);
-            // use swap to set the capacity, others do not guarantee to shrink
-            // to the exact capacity.
-            stream.swap(temp);
+            // Non-binding request, as shrink_to_fit() is non-binding.
+            stream.resize(num);
+            stream.shrink_to_fit();
+            stream.clear();
         }
 
         void swap(Stream<Data>& s) {
