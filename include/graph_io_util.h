@@ -78,6 +78,8 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
                 if (tidMap.emplace(vid, tid).second == false) {
                     throw KeyInUseException(std::to_string(vid));
                 }
+                // Add the vertex.
+                tiles[tid]->vertexNew(vid, std::forward<Args>(vertexArgs)...);
             }
         }
 
@@ -110,13 +112,13 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
             if (!(iss >> weight)) {
                 weight = defaultWeight;
             }
-            // Get corresponding tile and add vertex.
+            // Get corresponding tile and add vertex if hasn't been done.
             const auto srcTid = vertexTileIdx(srcId);
             const auto dstTid = vertexTileIdx(dstId);
-            if (!tiles[srcTid]->vertex(srcId)) {
+            if (!partitioned && !tiles[srcTid]->vertex(srcId)) {
                 tiles[srcTid]->vertexNew(srcId, std::forward<Args>(vertexArgs)...);
             }
-            if (!tiles[dstTid]->vertex(dstId)) {
+            if (!partitioned && !tiles[dstTid]->vertex(dstId)) {
                 tiles[dstTid]->vertexNew(dstId, std::forward<Args>(vertexArgs)...);
             }
             // Add edge.
