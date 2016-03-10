@@ -85,8 +85,9 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
         }
 
         auto vertexTileIdx = [&tidMap, partitioned](const VertexIdx& vid) {
-            if (partitioned && tidMap.count(vid) != 0) {
-                return tidMap.at(vid);
+            decltype(tidMap)::const_iterator it;
+            if (partitioned && (it = tidMap.find(vid)) != tidMap.end()) {
+                return it->second;
             } else {
                 return TileIdx(0);
             }
