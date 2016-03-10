@@ -4,7 +4,7 @@
  * Basic arithmetic and logic operations.
  * from zsim bithacks.h, https://github.com/s5z/zsim
  */
-#include <stdint.h>
+#include <cstdint>
 
 /* "Bithack" operations, see the bithacks website
  * http://graphics.stanford.edu/~seander/bithacks.html
