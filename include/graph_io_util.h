@@ -1,6 +1,7 @@
 #ifndef GRAPH_IO_UTIL_H_
 #define GRAPH_IO_UTIL_H_
 
+#include <cerrno>
 #include <fstream>
 #include <iterator>
 #include <sstream>
@@ -101,17 +102,33 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
         }
         string line;
         while (nextEffectiveLine(infile, line)) {
-            std::istringstream iss(line);
-            uint64_t srcId = 0;
-            uint64_t dstId = 0;
-            typename GraphTileType::EdgeType::WeightType weight;
             // Line format: <srcId> <dstId> [weight]
-            if (!(iss >> srcId >> dstId)) {
-                throw FileException(partitionFileName);
+
+            // A faster way to convert string to numbers than using operator>>.
+            const char* pbegin = line.c_str();
+            char* pend = nullptr;
+            uint64_t srcId = strtoull(pbegin, &pend, 10);
+            if (pend == pbegin || errno == ERANGE) {
+                // No conversion or out of range.
+                throw FileException(edgeListFileName);
             }
-            if (!(iss >> weight)) {
-                weight = defaultWeight;
+            pbegin = pend;
+            uint64_t dstId = strtoull(pbegin, &pend, 10);
+            if (pend == pbegin || errno == ERANGE) {
+                // No conversion or out of range.
+                throw FileException(edgeListFileName);
             }
+            pbegin = pend;
+
+            typename GraphTileType::EdgeType::WeightType weight = defaultWeight;
+            line = line.substr(pbegin - line.c_str());
+            if (line.find_first_not_of(" \t\n\v\f\r") != std::string::npos) {
+                std::istringstream iss(line);
+                if (!(iss >> weight)) {
+                    throw FileException(edgeListFileName);
+                }
+            }
+
             // Get corresponding tile and add vertex if hasn't been done.
             const auto srcTid = vertexTileIdx(srcId);
             const auto dstTid = vertexTileIdx(dstId);
