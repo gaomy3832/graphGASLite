@@ -56,9 +56,11 @@ class Stream {
         /* Modifiers */
 
         void reset(size_t num = 16) {
-            // Non-binding request, as shrink_to_fit() is non-binding.
-            stream.resize(num);
-            stream.shrink_to_fit();
+            if (num != stream.capacity()) {
+                // Non-binding request, as shrink_to_fit() is non-binding.
+                stream.resize(num);
+                stream.shrink_to_fit();
+            }
             stream.clear();
         }
 
