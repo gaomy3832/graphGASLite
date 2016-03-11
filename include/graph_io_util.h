@@ -102,6 +102,19 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
             throw FileException(edgeListFileName);
         }
         string line;
+
+        // Store edge info while reading file, then use multiple load threads to build tiles.
+        struct EdgeInfo {
+            VertexIdx srcId;
+            VertexIdx dstId;
+            typename GraphTileType::EdgeType::WeightType weight;
+            TileIdx srcTid;
+            TileIdx dstTid;
+        };
+        // Graph tiles for thread i will be loaded by load thread i % loadThreadCount.
+        constexpr uint32_t loadThreadCount = 8;
+        std::array<std::vector<EdgeInfo>, loadThreadCount> edgeInfoArray;
+
         while (nextEffectiveLine(infile, line)) {
             // Line format: <srcId> <dstId> [weight]
 
@@ -139,9 +152,22 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
             if (!partitioned && !tiles[dstTid]->vertex(dstId)) {
                 tiles[dstTid]->vertexNew(dstId, std::forward<Args>(vertexArgs)...);
             }
-            // Add edge.
-            tiles[srcTid]->edgeNew(srcId, dstId, dstTid, weight);
+
+            // Store edge info.
+            edgeInfoArray[srcTid % loadThreadCount].push_back(EdgeInfo{srcId, dstId, weight, srcTid, dstTid});
         }
+
+        ThreadPool loadPool(loadThreadCount);
+        auto loadFunc = [&edgeInfoArray, &tiles](uint32_t idx) {
+            for (const auto& e : edgeInfoArray[idx]) {
+                // Add edge.
+                tiles[e.srcTid]->edgeNew(e.srcId, e.dstId, e.dstTid, e.weight);
+            }
+        };
+        for (uint32_t idx = 0; idx < loadThreadCount; idx++) {
+            loadPool.add_task(std::bind(loadFunc, idx));
+        }
+        loadPool.wait_all();
 
         if (finalize) {
             // Finalize each tile.
