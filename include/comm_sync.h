@@ -45,6 +45,8 @@ public:
 
     typedef Stream<KeyValue> KeyValueStream;
 
+    static constexpr size_t reservedStreamSize = 256;
+
 public:
     explicit CommSync(const uint32_t threadCount, const KeyValue& endTag);
 
@@ -149,6 +151,9 @@ CommSync(const uint32_t threadCount, const KeyValue& endTag)
     streamLists_.resize(threadCount_);
     for (auto& sl : streamLists_) {
         sl.resize(threadCount_);
+        for (auto& s : sl) {
+            s.reset(reservedStreamSize);
+        }
     }
 }
 
@@ -199,7 +204,7 @@ template<typename KType, typename VType>
 void CommSync<KType, VType>::
 keyValProdDelAll(const uint32_t prodId) {
     for (auto& s : streamLists_[prodId]) {
-        s.reset();
+        s.reset(std::max<size_t>(s.size(), reservedStreamSize));
     }
 }
 
@@ -207,7 +212,7 @@ template<typename KType, typename VType>
 void CommSync<KType, VType>::
 keyValConsDelAll(const uint32_t consId) {
     for (auto& sl : streamLists_) {
-        sl[consId].reset();
+        sl[consId].reset(std::max<size_t>(sl[consId].size(), reservedStreamSize));
     }
 }
 
