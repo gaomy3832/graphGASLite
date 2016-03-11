@@ -288,7 +288,7 @@ public:
         if (dstTileId == tid_ && vertices_.count(dstId) == 0) {
             throw RangeException(std::to_string(dstId));
         }
-        if (dstTileId != tid_) {
+        if (dstTileId != tid_ && mirrorVertices_.count(dstId) == 0) {
             // Create mirror vertex if destination vertex is in different tile.
             auto mirrorVertex = Ptr<MirrorVertexType>(new MirrorVertexType(dstId, dstTileId));
             mirrorVertices_.insert( typename MirrorVertexMap::value_type(dstId, mirrorVertex) );
