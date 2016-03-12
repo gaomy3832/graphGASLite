@@ -1,10 +1,28 @@
 #ifndef HARNESS_H_
 #define HARNESS_H_
 
+#include <functional>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <tuple>
 #include <unistd.h>
+
+
+void usage(const char* appName, const char* appArgsName) {
+    std::cerr <<
+        "Usage: " << appName << " [options] "
+        "<input edge list file> [ <partition file> [ <output file> [ " <<
+        appArgsName <<
+        " ] ] ]" << std::endl;
+}
+
+
+/**********************************************************
+ *
+ * Algorithm kernel common arguments.
+ *
+ **********************************************************/
 
 constexpr uint64_t maxItersDefault = 1000;
 constexpr uint32_t numPartsDefault = 16;
@@ -74,6 +92,62 @@ int algoKernelComArg(const int argc, char* const* argv,
 
     return optind;
 }
+
+
+/**********************************************************
+ *
+ * Application specific arguments.
+ *
+ **********************************************************/
+
+/**
+ * Generic arguments.
+ */
+template<typename... ArgTypes>
+class GenericArgs {
+public:
+    static constexpr size_t argCount = sizeof...(ArgTypes);
+
+    const std::tuple<ArgTypes...>& argTuple() const { return argTuple_; }
+
+    template<size_t N>
+    const typename std::tuple_element<N, std::tuple<ArgTypes...>>::type arg() const {
+        return std::get<N>(argTuple_);
+    }
+
+    template<typename R>
+    R functionIs(std::function<R(ArgTypes...)>& func) {
+        return dispatch(func, typename GenSeq<sizeof...(ArgTypes)>::Type());
+    }
+
+    virtual const char* name() const = 0;
+
+    virtual void argIs(int argc, char* argv[]) = 0;
+
+protected:
+    std::tuple<ArgTypes...> argTuple_;
+
+protected:
+    /**
+     * Unpack tuple to variadic function arguments for function dispatch.
+     *
+     * http://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer
+     */
+    template<int ...>
+    struct Seq { };
+
+    template<int N, int... S>
+    struct GenSeq : GenSeq<N-1, N-1, S...> { };
+
+    template<int... S>
+    struct GenSeq<0, S...> { typedef Seq<S...> Type; };
+
+    template<typename R, int... S>
+    R dispatch(std::function<R(ArgTypes...)>& func, Seq<S...>) {
+        return func(std::get<S>(argTuple_)...);
+    }
+};
+
 
 #endif // HARNESS_H_
 
