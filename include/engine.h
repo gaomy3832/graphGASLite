@@ -11,15 +11,10 @@
 
 namespace GraphGASLite {
 
-template<typename GraphTileType, AlgoKernelTag akTag>
+template<typename GraphTileType>
 class Engine {
 public:
-    /**
-     * Define algorithm kernel type based on tag.
-     */
-    typedef conditional_t< akTag == AlgoKernelTag::EdgeCentric, EdgeCentricAlgoKernel<GraphTileType>,
-            conditional_t< akTag == AlgoKernelTag::VertexCentric, VertexCentricAlgoKernel<GraphTileType>,
-            BaseAlgoKernel<GraphTileType> > > AlgoKernelType;
+    typedef BaseAlgoKernel<GraphTileType> AlgoKernelType;
 
     typedef std::vector< Ptr<GraphTileType> > GraphTileList;
 
