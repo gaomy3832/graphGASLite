@@ -115,9 +115,9 @@ public:
         return std::get<N>(argTuple_);
     }
 
-    template<typename R>
-    R functionIs(std::function<R(ArgTypes...)>& func) {
-        return dispatch(func, typename GenSeq<sizeof...(ArgTypes)>::Type());
+    template<typename KernelType>
+    Ptr<KernelType> algoKernel(const string& kernelName) {
+        return dispatch(KernelType::instanceNew, typename GenSeq<sizeof...(ArgTypes)>::Type(), kernelName);
     }
 
     virtual const char* name() const = 0;
@@ -142,9 +142,11 @@ protected:
     template<int... S>
     struct GenSeq<0, S...> { typedef Seq<S...> Type; };
 
-    template<typename R, int... S>
-    R dispatch(std::function<R(ArgTypes...)>& func, Seq<S...>) {
-        return func(std::get<S>(argTuple_)...);
+    // Be careful about the position of BoundArgs. Generally variadic pack is at the end.
+    template<typename F, int... S, typename... BoundArgs>
+    auto dispatch(F func, Seq<S...>, BoundArgs... bndArgs)
+    ->decltype(func(bndArgs..., std::get<S>(argTuple_)...)) {
+        return func(bndArgs..., std::get<S>(argTuple_)...);
     }
 };
 
