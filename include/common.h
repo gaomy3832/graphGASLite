@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include "utils/exception.h"
+#include "utils/log.h"
 
 using std::string;
 

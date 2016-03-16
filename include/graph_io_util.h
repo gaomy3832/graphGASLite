@@ -6,6 +6,7 @@
 #include <iterator>
 #include <sstream>
 #include <vector>
+#include "utils/thread_pool.h"
 #include "graph.h"
 
 namespace GraphGASLite {

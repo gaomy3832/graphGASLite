@@ -7,6 +7,7 @@
 #include <sstream>
 #include <tuple>
 #include <unistd.h>
+#include "common.h"
 
 
 void usage(const char* appName, const char* appArgsName) {
