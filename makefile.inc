@@ -7,6 +7,7 @@ AR = ar
 RANLIB = ranlib
 
 SRC_EXTS = .cpp .cxx .c
+HDR_EXTS = .hpp .hxx .h
 LIB_NAME = libgraphgaslite
 
 LIBRARY = $(HOMEDIR)/lib/$(LIB_NAME).a
