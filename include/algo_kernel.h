@@ -14,6 +14,15 @@ enum class AlgoKernelTag {
     VertexCentric,
 };
 
+static inline string algoKernelTagName(const AlgoKernelTag& tag) {
+    switch(tag) {
+        case AlgoKernelTag::EdgeCentric: return "edge-centric";
+        case AlgoKernelTag::VertexCentric: return "vertex-centric";
+        case AlgoKernelTag::Invalid:
+        default: return "invalid";
+    }
+}
+
 class IterCountRepType;
 typedef CountType<uint64_t, IterCountRepType> IterCount;
 
