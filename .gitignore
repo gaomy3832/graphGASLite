@@ -2,6 +2,8 @@
 *.o
 lib/
 
+algo_kernels/edge_centric/bin/
+
 googletest/
 tests/bin/
 
