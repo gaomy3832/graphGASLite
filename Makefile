@@ -1,5 +1,7 @@
 
-all: edge_kernels
+default: edge_kernels
+
+all: default tests
 
 .PHONY: edge_kernels tests run_tests clean
 
