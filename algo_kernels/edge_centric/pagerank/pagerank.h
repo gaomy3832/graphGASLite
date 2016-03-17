@@ -63,7 +63,7 @@ protected:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
 
-    std::pair<UpdateType, bool> scatter(const IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& weight) const {
+    std::pair<UpdateType, bool> scatter(const IterCount&, Ptr<VertexType>& src, EdgeWeightType&) const {
         auto& dpr = src->data().PAGERANK();
         auto contribute = dpr.rank_ / src->outDeg();
         std::pair<UpdateType, bool> ret;
@@ -72,7 +72,7 @@ protected:
         return ret;
     }
 
-    bool gather(const IterCount& iter, Ptr<VertexType>& dst, const UpdateType& update) const {
+    bool gather(const IterCount&, Ptr<VertexType>& dst, const UpdateType& update) const {
         auto& dpr = dst->data().PAGERANK();
         auto& upr = update.PAGERANK();
         dpr.sum_ += upr.contribute_;

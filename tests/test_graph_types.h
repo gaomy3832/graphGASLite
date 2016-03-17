@@ -7,7 +7,7 @@ using namespace GraphGASLite;
 
 class TestData {
 public:
-    TestData(const VertexIdx& vid, const double x) : x_(x) {}
+    TestData(const VertexIdx&, const double x) : x_(x) {}
 
     double x_;
 };

@@ -11,10 +11,10 @@ public:
         maxItersIs(10);
     }
 protected:
-    std::pair<TestUpdate, bool> scatter(const IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& weight) const {
+    std::pair<TestUpdate, bool> scatter(const IterCount&, Ptr<VertexType>&, EdgeWeightType&) const {
         return std::make_pair<TestUpdate, bool>(0, false);
     }
-    bool gather(const IterCount& iter, Ptr<VertexType>& dst, const TestUpdate& update) const {
+    bool gather(const IterCount&, Ptr<VertexType>&, const TestUpdate&) const {
         return false;
     }
 };
@@ -25,10 +25,10 @@ public:
         maxItersIs(15);
     }
 protected:
-    std::pair<TestUpdate, bool> scatter(const IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& weight) const {
+    std::pair<TestUpdate, bool> scatter(const IterCount&, Ptr<VertexType>&, EdgeWeightType&) const {
         return std::make_pair<TestUpdate, bool>(0, false);
     }
-    bool gather(const IterCount& iter, Ptr<VertexType>& dst, const TestUpdate& update) const {
+    bool gather(const IterCount&, Ptr<VertexType>&, const TestUpdate&) const {
         return false;
     }
 };

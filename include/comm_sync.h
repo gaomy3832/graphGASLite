@@ -199,7 +199,7 @@ keyValNew(const uint32_t prodId, const uint32_t consId,
 
 template<typename KType, typename VType>
 void CommSync<KType, VType>::
-endTagNew(const uint32_t prodId, const uint32_t consId) {
+endTagNew(const uint32_t, const uint32_t) {
     // Nothing to do.
 }
 

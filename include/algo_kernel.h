@@ -109,17 +109,17 @@ protected:
     /**
      * Operations on end of each iteration.
      */
-    virtual void onIterationEnd(Ptr<GraphTileType>& graph, const IterCount& iter) const { }
+    virtual void onIterationEnd(Ptr<GraphTileType>&, const IterCount&) const { }
 
     /**
      * Operations on start of the algorithm kernel.
      */
-    virtual void onAlgoKernelStart(Ptr<GraphTileType>& graph) const { }
+    virtual void onAlgoKernelStart(Ptr<GraphTileType>&) const { }
 
     /**
      * Operations on end of the algorithm kernel.
      */
-    virtual void onAlgoKernelEnd(Ptr<GraphTileType>& graph) const { }
+    virtual void onAlgoKernelEnd(Ptr<GraphTileType>&) const { }
 
 protected:
     /**
