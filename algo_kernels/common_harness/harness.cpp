@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 
     GraphGASLite::Engine<Graph> engine;
     engine.graphTileIs(GraphGASLite::GraphIOUtil::graphTilesFromEdgeList<Graph>(
-                threadCount, edgelistFile, partitionFile, 0, graphTileCount/threadCount, true));
+                threadCount, edgelistFile, partitionFile, 1, graphTileCount/threadCount, true));
 
     std::cout << "Graph loaded from " << edgelistFile <<
         (partitionFile.empty() ? "" : string(" and ") + partitionFile) <<
