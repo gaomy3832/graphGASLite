@@ -99,7 +99,6 @@ public:
     DegreeCount accDeg() const { return accDeg_; }
     void accDegDel() {
         accDeg_ = 0;
-        accUpdate_ = UpdateType();
     }
 
 protected:
@@ -346,6 +345,8 @@ public:
                             + " due to uncleared mirror vertex " + std::to_string(mv->vid())
                             + " acc degree.");
                 }
+                // Reset application update.
+                mv->updateDelAll();
             }
 
         }
