@@ -71,6 +71,8 @@ int main(int argc, char* argv[]) {
         "with max iterations " << maxIters << " and number of partitions " << numParts << "." <<
         std::endl;
 
+    std::cout << "Application parameters: " << appArgs << "." << std::endl;
+
     /* Run. */
 
     engine();
