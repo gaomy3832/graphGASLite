@@ -35,7 +35,7 @@ protected:
 
 class EngineTest : public ::testing::Test {
 public:
-    typedef Engine<TestGraphTile, AlgoKernelTag::EdgeCentric> EngineType;
+    typedef Engine<TestGraphTile> EngineType;
 
 protected:
     virtual void SetUp() {
