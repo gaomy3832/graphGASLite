@@ -116,6 +116,12 @@ public:
         return std::get<N>(argTuple_);
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const GenericArgs& args) {
+        StreamOutputFunc func(os);
+        args.foreach(func);
+        return os;
+    }
+
     template<typename KernelType>
     Ptr<KernelType> algoKernel(const string& kernelName) {
         return dispatch(KernelType::instanceNew, typename GenSeq<sizeof...(ArgTypes)>::Type(), kernelName);
@@ -123,7 +129,10 @@ public:
 
     virtual const char* name() const = 0;
 
-    virtual void argIs(int argc, char* argv[]) = 0;
+    virtual void argIs(int argc, char* argv[]) {
+        ArgReadFunc func(argc, argv);
+        foreach(func);
+    }
 
 protected:
     std::tuple<ArgTypes...> argTuple_;
@@ -149,6 +158,77 @@ protected:
     ->decltype(func(bndArgs..., std::get<S>(argTuple_)...)) {
         return func(bndArgs..., std::get<S>(argTuple_)...);
     }
+
+
+    /**
+     * foreach semantic: apply functor to each of the tuple element.
+     *
+     * http://stackoverflow.com/questions/1198260/iterate-over-tuple
+     */
+    template<size_t I = 0, typename F>
+    typename std::enable_if<I <  sizeof...(ArgTypes), void>::type
+    foreach(F& func) {
+        func(std::get<I>(argTuple_));
+        foreach<I+1, F>(func);
+    }
+
+    template<size_t I = 0, typename F>
+    typename std::enable_if<I >= sizeof...(ArgTypes), void>::type
+    foreach(F&) { }
+
+    template<size_t I = 0, typename F>
+    typename std::enable_if<I <  sizeof...(ArgTypes), void>::type
+    foreach(F& func) const {
+        func(std::get<I>(argTuple_));
+        foreach<I+1, F>(func);
+    }
+
+    template<size_t I = 0, typename F>
+    typename std::enable_if<I >= sizeof...(ArgTypes), void>::type
+    foreach(F&) const { }
+
+protected:
+    /**
+     * Functors for foreach.
+     */
+
+    struct StreamOutputFunc {
+    private:
+        std::ostream* os_;
+        int idx_;
+
+    public:
+        StreamOutputFunc(std::ostream& os) : os_(&os), idx_(0) { }
+
+        template<typename T>
+        void operator()(const T& arg) {
+            (*os_) << (idx_ == 0 ? "" : ", ") << arg;
+            idx_++;
+        }
+    };
+
+    struct ArgReadFunc {
+    private:
+        const int argc_;
+        std::vector<char*> argv_;
+        int idx_;
+
+    public:
+        ArgReadFunc(const int argc, char* const argv[])
+            : argc_(argc), idx_(0)
+        {
+            for (int i = 0; i < argc_; i++) {
+                argv_.push_back(argv[i]);
+            }
+        }
+
+        template<typename T>
+        void operator()(T& arg) {
+            if (idx_ >= argc_) return;
+            std::stringstream(argv_[idx_]) >> arg;
+            idx_++;
+        }
+    };
 };
 
 
