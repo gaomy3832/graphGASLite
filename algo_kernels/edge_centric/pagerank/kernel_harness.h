@@ -17,15 +17,6 @@ public:
     };
 
     const char* name() const { return "<beta> [ <tolerance> ]"; }
-
-    void argIs(int argc, char* argv[]) {
-        if (argc > 0) {
-            std::stringstream(argv[0]) >> std::get<0>(argTuple_);
-            if (argc > 1) {
-                std::stringstream(argv[1]) >> std::get<1>(argTuple_);
-            }
-        }
-    }
 };
 
 #define VDATA(vd) vd.PAGERANK().rank_
