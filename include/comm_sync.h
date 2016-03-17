@@ -138,6 +138,9 @@ private:
 
 };
 
+template<typename KType, typename VType>
+constexpr size_t CommSync<KType, VType>::reservedStreamSize;
+
 
 
 template<typename KType, typename VType>
