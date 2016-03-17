@@ -6,6 +6,7 @@ BIN_DIR = bin
 
 APPS = \
 	   pagerank \
+	   sssp \
 
 
 default: $(addprefix $(BIN_DIR)/,$(APPS))
