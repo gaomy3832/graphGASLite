@@ -153,15 +153,16 @@ public:
         };
 
         // Thread pool.
-        ThreadPool pool(threadCount);
+        auto pool = new ThreadPool(threadCount);
         for (auto& td : threadData) {
-            pool.add_task(std::bind(threadRegisterFunc, td));
+            pool->add_task(std::bind(threadRegisterFunc, td));
         }
-        pool.wait_all();
+        pool->wait_all();
         for (auto& td : threadData) {
-            pool.add_task(std::bind(threadFunc, td));
+            pool->add_task(std::bind(threadFunc, td));
         }
-        pool.wait_all();
+        pool->wait_all();
+        delete pool;
     }
 
 protected:
