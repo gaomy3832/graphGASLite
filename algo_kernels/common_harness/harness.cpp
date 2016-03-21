@@ -7,6 +7,12 @@
 // Kernel harness header.
 #include "kernel_harness.h"
 
+#ifdef VERTEX_ARGS
+#define VERTEX_ARGS_WITH_COMMA ,VERTEX_ARGS
+#else
+#define VERTEX_ARGS_WITH_COMMA
+#endif // VERTEX_ARGS
+
 
 int main(int argc, char* argv[]) {
 
@@ -50,7 +56,8 @@ int main(int argc, char* argv[]) {
 
     GraphGASLite::Engine<Graph> engine;
     engine.graphTileIs(GraphGASLite::GraphIOUtil::graphTilesFromEdgeList<Graph>(
-                threadCount, edgelistFile, partitionFile, 1, graphTileCount/threadCount, true));
+                threadCount, edgelistFile, partitionFile, 1, graphTileCount/threadCount, true
+                VERTEX_ARGS_WITH_COMMA));
 
     std::cout << "Graph loaded from " << edgelistFile <<
         (partitionFile.empty() ? "" : string(" and ") + partitionFile) <<
