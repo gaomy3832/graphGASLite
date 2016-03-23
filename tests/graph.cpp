@@ -12,7 +12,7 @@ public:
 protected:
     virtual void SetUp() {
         graphs_ = GraphIOUtil::graphTilesFromEdgeList<TestGraphTile>(
-                    2, "test_graphs/small.dat", "test_graphs/small.part", 0, 1, false, 0);
+                    2, "test_graphs/small.dat", "test_graphs/small.part", 0, false, 1, false, 0);
         // Do not finalize the graph.
     }
 
