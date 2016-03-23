@@ -22,8 +22,9 @@ int main(int argc, char* argv[]) {
     size_t graphTileCount;
     uint64_t maxIters;
     uint32_t numParts;
+    bool undirected;
 
-    auto optind = algoKernelComArg(argc, argv, threadCount, graphTileCount, maxIters, numParts);
+    auto optind = algoKernelComArg(argc, argv, threadCount, graphTileCount, maxIters, numParts, undirected);
     if (optind == -1) return 1;
     argc -= optind;
     argv += optind;
@@ -56,13 +57,14 @@ int main(int argc, char* argv[]) {
 
     GraphGASLite::Engine<Graph> engine;
     engine.graphTileIs(GraphGASLite::GraphIOUtil::graphTilesFromEdgeList<Graph>(
-                threadCount, edgelistFile, partitionFile, 1, graphTileCount/threadCount, true
+                threadCount, edgelistFile, partitionFile, 1, undirected, graphTileCount/threadCount, true
                 VERTEX_ARGS_WITH_COMMA));
 
     std::cout << "Graph loaded from " << edgelistFile <<
         (partitionFile.empty() ? "" : string(" and ") + partitionFile) <<
         " with " << graphTileCount << " graph tiles, " <<
         "into " << threadCount << " tiles." <<
+        " Treated as " << (undirected ? "undirected" : "directed") << " graph." <<
         std::endl;
 
     /* Make algorithm kernel. */

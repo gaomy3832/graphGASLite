@@ -39,6 +39,8 @@ void algoKernelComArgHelp() {
         << "Maximum iteration number (default " << maxItersDefault << ")." << std::endl
         << '\t' << "-p " << std::left << std::setw(w) << "<numParts>"
         << "Number of partitions per thread (default " << numPartsDefault << ")." << std::endl
+        << '\t' << "-u " << std::left << std::setw(w) << ""
+        << "Undirected graph (default directed)." << std::endl
         << '\t' << "-h " << std::left << std::setw(w) << ""
         << "Print this help message." << std::endl;
 }
@@ -50,16 +52,18 @@ void algoKernelComArgHelp() {
  */
 int algoKernelComArg(const int argc, char* const* argv,
         size_t& threadCount, size_t& graphTileCount,
-        uint64_t& maxIters, uint32_t& numParts) {
+        uint64_t& maxIters, uint32_t& numParts,
+        bool& undirected) {
 
     threadCount = 0;
     graphTileCount = 0;
     maxIters = maxItersDefault;
     numParts = numPartsDefault;
+    undirected = false;
 
     int ch;
     opterr = 0; // Reset potential previous errors.
-    while ((ch = getopt(argc, argv, "t:g:m:p:h")) != -1) {
+    while ((ch = getopt(argc, argv, "t:g:m:p:uh")) != -1) {
         switch (ch) {
             case 't':
                 std::stringstream(optarg) >> threadCount;
@@ -72,6 +76,9 @@ int algoKernelComArg(const int argc, char* const* argv,
                 break;
             case 'p':
                 std::stringstream(optarg) >> numParts;
+                break;
+            case 'u':
+                undirected = true;
                 break;
             case 'h':
             default:

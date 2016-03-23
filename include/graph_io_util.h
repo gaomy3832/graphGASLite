@@ -41,7 +41,7 @@ template<typename GraphTileType, typename... Args>
 std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
         const string& edgeListFileName, const string& partitionFileName,
         const typename GraphTileType::EdgeType::WeightType& defaultWeight,
-        const size_t tileMergeFactor, const bool finalize,
+        const bool undirected, const size_t tileMergeFactor, const bool finalize,
         Args&&... vertexArgs) {
 
     try{
@@ -156,6 +156,9 @@ std::vector< Ptr<GraphTileType> > graphTilesFromEdgeList(const size_t tileCount,
 
             // Store edge info.
             edgeInfoArray[srcTid % loadThreadCount].push_back(EdgeInfo{srcId, dstId, weight, srcTid, dstTid});
+            if (undirected) {
+                edgeInfoArray[dstTid % loadThreadCount].push_back(EdgeInfo{dstId, srcId, weight, dstTid, srcTid});
+            }
         }
 
         ThreadPool loadPool(loadThreadCount);
