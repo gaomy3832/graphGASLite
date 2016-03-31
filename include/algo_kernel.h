@@ -299,13 +299,23 @@ onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) 
                 // Local destination.
                 cs.keyValNew(tid, tid, dstId, update);
             } else {
+#ifdef NO_LOCAL_COMBINE
+                // Remote destination, directly send.
+                const auto mv = graph->mirrorVertex(dstId);
+                const auto dstTileId = mv->masterTileId();
+                cs.keyValNew(tid, dstTileId, dstId, update);
+#else // NO_LOCAL_COMBINE
                 // Remote destination, use mirror vertex.
                 auto mv = graph->mirrorVertex(dstId);
                 mv->updateNew(update);
+#endif // NO_LOCAL_COMBINE
             }
         }
     }
 
+#ifdef NO_LOCAL_COMBINE
+    // Nothing to do. Already sent directly.
+#else // NO_LOCAL_COMBINE
     // Send data.
     for (auto mvIter = graph->mirrorVertexIter(); mvIter != graph->mirrorVertexIterEnd(); ++mvIter) {
         auto mv = mvIter->second;
@@ -316,6 +326,7 @@ onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) 
         // Clear updates in mirror vertex.
         mv->updateDelAll();
     }
+#endif // NO_LOCAL_COMBINE
 
     for (uint32_t idx = 0; idx < cs.threadCount(); idx++) {
         cs.endTagNew(tid, idx);
