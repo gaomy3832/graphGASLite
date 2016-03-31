@@ -217,17 +217,26 @@ def cluster(edgelistFileName, numParts, vpartDict):
     return vpartClusterDict
 
 
+def writeHead(fh, numParts, imbalance, seed, clustered):
+    fh.write('# Partitioned into {} partitions.\n'.format(numParts))
+    fh.write('# With imbalance factor {}, seed {}.\n'.format(imbalance, seed))
+    if clustered:
+        fh.write('# Has been clustered.\n')
+    fh.write('\n')
+
 
 vpartDict = partition(edgelistFileName, numParts, imbalance)
 
 if write_precluster:
     with open(partitionFileName + '.nocluster', 'w') as fh:
+        writeHead(fh, numParts, imbalance, seed, False)
         for (v, p) in vpartDict.iteritems():
             fh.write('{}\t{}\n'.format(v, p))
 
 vpartClusterDict = cluster(edgelistFileName, numParts, vpartDict)
 
 with open(partitionFileName, 'w') as fh:
+    writeHead(fh, numParts, imbalance, seed, True)
     for (v, p) in vpartClusterDict.iteritems():
         fh.write('{}\t{}\n'.format(v, p))
 
