@@ -45,7 +45,9 @@ public:
 
     typedef Stream<KeyValue> KeyValueStream;
 
-    static constexpr size_t reservedStreamSize = 256;
+    // Reserve at most 4k or 256 key-value pairs for each prod-cons pair.
+    static constexpr size_t reservedStreamSize = 4096/sizeof(KeyValue) < 256 ?
+        4096/sizeof(KeyValue) : 256;
 
 public:
     explicit CommSync(const uint32_t threadCount, const KeyValue& endTag);
