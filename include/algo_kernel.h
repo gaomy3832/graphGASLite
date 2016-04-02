@@ -321,6 +321,10 @@ onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) 
         auto mv = mvIter->second;
         const auto dstTileId = mv->masterTileId();
         const auto dstId = mv->vid();
+        if (!mv->hasUpdate()) {
+            // Skip if no update accumulated.
+            continue;
+        }
         const auto& accUpdate = mv->accUpdate();
         cs.keyValNew(tid, dstTileId, dstId, accUpdate);
         // Clear updates in mirror vertex.

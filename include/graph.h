@@ -76,6 +76,8 @@ public:
 
     TileIdx masterTileId() const { return masterTileId_; }
 
+    bool hasUpdate() const { return hasUpdate_; }
+
     UpdateType accUpdate() const { return accUpdate_; }
 
     /**
@@ -83,6 +85,7 @@ public:
      */
     void updateNew(const UpdateType& update) {
         accUpdate_ += update;
+        hasUpdate_ = true;
     }
 
     /**
@@ -90,6 +93,7 @@ public:
      */
     void updateDelAll() {
         accUpdate_ = UpdateType();
+        hasUpdate_ = false;
     }
 
     /**
@@ -104,6 +108,8 @@ public:
 protected:
     const VertexIdx vid_;
     const TileIdx masterTileId_;
+
+    bool hasUpdate_;
 
     union {
     UpdateType accUpdate_;
