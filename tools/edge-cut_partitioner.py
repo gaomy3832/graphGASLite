@@ -190,12 +190,14 @@ def cluster(edgelistFileName, numParts, vpartDict):
 
             # Clear the connectivity b/w the pair.
             conns[idx,jdx] = 0
+            conns[jdx,idx] = 0
             # Merge the connectivity of others to/from this pair.
             halfMergedConns[:,step] = conns[:,idx] + conns[:,jdx] + conns[idx,:] + conns[jdx,:]
             conns[:,pair] = np.zeros((curNumParts, len(pair)))
             conns[pair,:] = np.zeros((len(pair), curNumParts))
 
         conns = np.array([ np.sum(halfMergedConns[pair,:], axis=0) for pair in pairs ])
+        conns = np.triu(conns) + np.transpose(np.tril(conns))
         assignment = [ assignment[pair[0]]+assignment[pair[1]] for pair in pairs ]
 
         assert conns.ndim == 2
