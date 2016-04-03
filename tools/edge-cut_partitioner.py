@@ -110,6 +110,8 @@ def partition(edgelistFileName, numParts, imbalance):
 
         try:
             prob = weightedSoftMax(score, weight)
+            if any(prob < 0):
+                raise Exception('Negative probability encountered')
             # Sample with weighted prob.
             cdf = np.cumsum(prob)
             p = np.sum(cdf < random.random())
@@ -177,16 +179,26 @@ def cluster(edgelistFileName, numParts, vpartDict):
                 .format(curNumParts, np.sum(conns))
 
         pairs = []
+        clusteredParts = []
         halfMergedConns = np.zeros((curNumParts, curNumParts/2), dtype=int)
 
         for step in range(curNumParts/2):
 
+            # Exclude the partitions already clustered.
+            curConns = conns
+            np.fill_diagonal(curConns, -np.ones(curNumParts))
+            curConns[clusteredParts,:] = -np.ones((len(clusteredParts), curNumParts))
+            curConns[:,clusteredParts] = -np.ones((curNumParts, len(clusteredParts)))
             # Find the pair with the max connectivity.
-            argmax = np.argmax(conns)
+            argmax = np.argmax(curConns)
             idx = argmax / curNumParts
             jdx = argmax % curNumParts
+            assert idx not in clusteredParts
+            assert jdx not in clusteredParts
             pair = (idx, jdx)
             pairs.append(pair)
+            clusteredParts.append(idx)
+            clusteredParts.append(jdx)
 
             # Clear the connectivity b/w the pair.
             conns[idx,jdx] = 0
@@ -207,7 +219,12 @@ def cluster(edgelistFileName, numParts, vpartDict):
     print '[cluster] Final connectivity: {}'.format(np.sum(conns))
 
     assignment = sum(assignment, [])
-    assert len(assignment) == numParts
+
+    # Assert the final assignment is valid (a shuffle).
+    assert min(assignment) == 0
+    assert max(assignment) == numParts-1
+    assert len(set(assignment)) == numParts
+
     invAssign = [0]*numParts
     for idx in range(numParts):
         invAssign[assignment[idx]] = idx
