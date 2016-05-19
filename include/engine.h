@@ -165,7 +165,7 @@ public:
         delete pool;
     }
 
-protected:
+private:
     GraphTileList graphs_;
     AlgoKernelList kernels_;
 

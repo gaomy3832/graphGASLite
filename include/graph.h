@@ -105,7 +105,7 @@ public:
         accDeg_ = 0;
     }
 
-protected:
+private:
     const VertexIdx vid_;
     const TileIdx masterTileId_;
 
@@ -117,7 +117,7 @@ protected:
     DegreeCount accDeg_;
     };
 
-protected:
+private:
     template<typename VDT, typename UDT, typename EWT>
     friend class GraphTile;
 
