@@ -13,6 +13,8 @@ parser.add_argument('edgelistFileName', help='Input edge list file')
 parser.add_argument('numParts', type=int, help='Number of partitions')
 parser.add_argument('-i', type=float, default=1.05,
         help='Edge count imbalance factor')
+parser.add_argument('-u', action='store_true',
+        help='Undirected graph')
 parser.add_argument('--seed', type=int, default=1115,
         help='Random seed')
 parser.add_argument('--write-precluster', action='store_true',
@@ -24,6 +26,7 @@ partitionFileName = os.path.expanduser(args.partitionFileName)
 edgelistFileName = os.path.expanduser(args.edgelistFileName)
 numParts = args.numParts
 imbalance = args.i
+undirected = args.u
 seed = args.seed
 write_precluster = args.write_precluster
 
@@ -34,7 +37,7 @@ random.seed(seed)
 '''
 Return a dict with mapping from vertex index to partition index.
 '''
-def partition(edgelistFileName, numParts, imbalance):
+def partition(edgelistFileName, numParts, imbalance, undirected):
 
     class VertexInfo:
         def __init__(self):
@@ -72,6 +75,10 @@ def partition(edgelistFileName, numParts, imbalance):
             vpartDict.setdefault(src, -1)
             vpartDict.setdefault(dst, -1)
             ne += 1
+
+            if undirected:
+                vinfoDict[dst].addDstVertex(src)
+                ne += 1
 
             if ne % 1000000 == 0:
                 print '[partition] Read {} edges'.format(ne)
@@ -137,7 +144,7 @@ def partition(edgelistFileName, numParts, imbalance):
 Cluster the partitions with higher connectivity together. Return a dict with
 the mapping from vertex index to the partition index after clustering.
 '''
-def cluster(edgelistFileName, numParts, vpartDict):
+def cluster(edgelistFileName, numParts, vpartDict, undirected):
 
     # Count the mirror vertices.
     mvSets = [ [ set() for idx in range(numParts) ] for jdx in range(numParts) ]
@@ -158,8 +165,12 @@ def cluster(edgelistFileName, numParts, vpartDict):
 
             if srcpart != dstpart:
                 mvSets[srcpart][dstpart].add(dst)
+                if undirected:
+                    mvSets[dstpart][srcpart].add(src)
 
             ne += 1
+            if undirected:
+                ne += 1
             if ne % 1000000 == 0:
                 print '[cluster] Read {} edges'.format(ne)
 
@@ -236,26 +247,27 @@ def cluster(edgelistFileName, numParts, vpartDict):
     return vpartClusterDict
 
 
-def writeHead(fh, numParts, imbalance, seed, clustered):
+def writeHead(fh, numParts, imbalance, undirected, seed, clustered):
     fh.write('# Partitioned into {} partitions.\n'.format(numParts))
-    fh.write('# With imbalance factor {}, seed {}.\n'.format(imbalance, seed))
+    fh.write('# With imbalance factor {}, {}, seed {}.\n'\
+            .format(imbalance, ('undirected' if undirected else 'directed'), seed))
     if clustered:
         fh.write('# Has been clustered.\n')
     fh.write('\n')
 
 
-vpartDict = partition(edgelistFileName, numParts, imbalance)
+vpartDict = partition(edgelistFileName, numParts, imbalance, undirected)
 
 if write_precluster:
     with open(partitionFileName + '.nocluster', 'w') as fh:
-        writeHead(fh, numParts, imbalance, seed, False)
+        writeHead(fh, numParts, imbalance, undirected, seed, False)
         for (v, p) in vpartDict.iteritems():
             fh.write('{}\t{}\n'.format(v, p))
 
-vpartClusterDict = cluster(edgelistFileName, numParts, vpartDict)
+vpartClusterDict = cluster(edgelistFileName, numParts, vpartDict, undirected)
 
 with open(partitionFileName, 'w') as fh:
-    writeHead(fh, numParts, imbalance, seed, True)
+    writeHead(fh, numParts, imbalance, undirected, seed, True)
     for (v, p) in vpartClusterDict.iteritems():
         fh.write('{}\t{}\n'.format(v, p))
 
