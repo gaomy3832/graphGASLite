@@ -9,7 +9,6 @@
 namespace GraphGASLite {
 
 enum class AlgoKernelTag {
-    Invalid,
     EdgeCentric,
     VertexCentric,
 };
@@ -18,7 +17,6 @@ static inline string algoKernelTagName(const AlgoKernelTag& tag) {
     switch(tag) {
         case AlgoKernelTag::EdgeCentric: return "edge-centric";
         case AlgoKernelTag::VertexCentric: return "vertex-centric";
-        case AlgoKernelTag::Invalid:
         default: return "invalid";
     }
 }
@@ -42,9 +40,7 @@ public:
     /**
      * Algorithm kernel tag.
      */
-    virtual AlgoKernelTag tag() const {
-        return AlgoKernelTag::Invalid;
-    }
+    virtual AlgoKernelTag tag() const  = 0;
 
     /**
      * If print progress.
