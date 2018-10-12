@@ -277,25 +277,18 @@ onIteration(Ptr<GraphTileType>& graph, CommSyncType& cs, const IterCount& iter) 
     cs.keyValProdDelAll(tid);
 
     // Scatter.
-    Ptr<VertexType> cachedSrc = nullptr;
-    VertexIdx cachedSrcId(-1);
     for (auto edgeIter = graph->edgeIter(); edgeIter != graph->edgeIterEnd(); ++edgeIter) {
         const auto srcId = edgeIter->srcId();
         const auto dstId = edgeIter->dstId();
         // Return reference to allow update to weight.
         auto& weight = edgeIter->weight();
 
-        // Cache the src to save vertex map search because edges are sorted by the src vertex.
-        if (srcId != cachedSrcId) {
-            cachedSrc = graph->vertex(srcId);
-            cachedSrcId = srcId;
-        }
-
         // Scatter.
-        auto ret = scatter(iter, cachedSrc, weight);
+        auto src = graph->vertex(srcId);
+        auto ret = scatter(iter, src, weight);
         if (ret.second) {
             const auto& update = ret.first;
-            if (graph->vertex(dstId) != nullptr) {
+            if (graph->hasVertex(dstId)) {
                 // Local destination.
                 cs.keyValNew(tid, tid, dstId, update);
             } else {
