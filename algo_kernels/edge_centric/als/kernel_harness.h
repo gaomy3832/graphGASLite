@@ -11,15 +11,18 @@ typedef ALSEdgeCentricAlgoKernel<Graph> Kernel;
 
 const char appName[] = "als";
 
-class AppArgs : public GenericArgs<double, double> {
+class AppArgs : public GenericArgs<uint64_t, double, double> {
 public:
-    AppArgs() : GenericArgs<double, double>() {
-        std::get<0>(argTuple_) = lambdaDefault;
-        std::get<1>(argTuple_) = toleranceDefault;
+    AppArgs() : GenericArgs<uint64_t, double, double>() {
+        std::get<0>(argTuple_) = boundaryDefault;
+        std::get<1>(argTuple_) = lambdaDefault;
+        std::get<2>(argTuple_) = toleranceDefault;
     };
 
     const ArgInfo* argInfoList() const {
         static const ArgInfo list[] = {
+            {"", "[boundary]", "Boundary vertex index (default " + std::to_string(boundaryDefault) + ")."
+                               " Vertices smaller are users, and vertices equal or larger are movies."},
             {"", "[lambda]", "Regulation coefficient (default " + std::to_string(lambdaDefault) + ")."},
             {"", "[tolerance]", "Error tolerance (default " + std::to_string(toleranceDefault) + ")."},
         };
@@ -27,6 +30,7 @@ public:
     }
 
 private:
+    static constexpr uint64_t boundaryDefault = 10000000;
     static constexpr double lambdaDefault = 0.05;
     static constexpr double toleranceDefault = 1e-2;
 };

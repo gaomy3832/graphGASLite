@@ -169,8 +169,8 @@ template<typename GraphTileType>
 class ALSEdgeCentricAlgoKernel : public GraphGASLite::EdgeCentricAlgoKernel<GraphTileType> {
 public:
     static Ptr<ALSEdgeCentricAlgoKernel> instanceNew(const string& name,
-            const double lambda, const double tolerance) {
-        return Ptr<ALSEdgeCentricAlgoKernel>(new ALSEdgeCentricAlgoKernel(name, lambda, tolerance));
+            const GraphGASLite::VertexIdx::Type boundary, const double lambda, const double tolerance) {
+        return Ptr<ALSEdgeCentricAlgoKernel>(new ALSEdgeCentricAlgoKernel(name, boundary, lambda, tolerance));
     }
 
 protected:
@@ -243,7 +243,7 @@ protected:
         // Specify vertex roles.
         for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
             auto& v = vertexIter->second;
-            v->data().role = v->vid() < 10000000 ? Role::USER : Role::MOVIE;
+            v->data().role = v->vid() < boundary_ ? Role::USER : Role::MOVIE;
         }
 
         // Initialize movie features.
@@ -268,14 +268,16 @@ protected:
     }
 
 protected:
-    ALSEdgeCentricAlgoKernel(const string& name, const double lambda, const double tolerance)
+    ALSEdgeCentricAlgoKernel(const string& name,
+            const GraphGASLite::VertexIdx::Type boundary, const double lambda, const double tolerance)
         : GraphGASLite::EdgeCentricAlgoKernel<GraphTileType>(name),
-          lambda_(lambda), tolerance_(tolerance)
+          boundary_(boundary), lambda_(lambda), tolerance_(tolerance)
     {
         // Nothing else to do.
     }
 
 private:
+    const GraphGASLite::VertexIdx boundary_;
     const double lambda_;
     const double tolerance_;
 };
