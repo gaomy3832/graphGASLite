@@ -4,46 +4,36 @@
 #include "graph.h"
 #include "algo_kernel.h"
 
-namespace GraphGASLite {
-
 /*
- * Graph types definition.
- *
- * Define PAGERANK() in graph data and update to get PageRankData and PageRankUpdate.
+ * Graph types definitions.
  */
 struct PageRankData {
-    DegreeCount collected_;
-    double sum_;
-    double rank_;
+    GraphGASLite::DegreeCount collected;
+    double sum;
+    double rank;
 
-    PageRankData(const VertexIdx&)
-        : collected_(0), sum_(0), rank_(0)
+    PageRankData(const GraphGASLite::VertexIdx&)
+        : collected(0), sum(0), rank(0)
     {
         // Nothing else to do.
     }
-
-    inline PageRankData& PAGERANK() { return *this; }
-    inline const PageRankData& PAGERANK() const { return *this; }
 };
 
 struct PageRankUpdate {
-    double contribute_;
-    DegreeCount count_;
+    double contribute;
+    GraphGASLite::DegreeCount count;
 
-    PageRankUpdate(const double contribute = 0, const DegreeCount& count = 0)
-        : contribute_(contribute), count_(count)
+    PageRankUpdate(const double contribute_ = 0, const GraphGASLite::DegreeCount& count_ = 0)
+        : contribute(contribute_), count(count_)
     {
         // Nothing else to do.
     }
 
     PageRankUpdate& operator+=(const PageRankUpdate& update) {
-        this->contribute_ += update.contribute_;
-        this->count_ += update.count_;
+        contribute += update.contribute;
+        count += update.count;
         return *this;
     }
-
-    inline PageRankUpdate& PAGERANK() { return *this; }
-    inline const PageRankUpdate& PAGERANK() const { return *this; }
 };
 
 
@@ -51,7 +41,7 @@ struct PageRankUpdate {
  * Algorithm kernel definition.
  */
 template<typename GraphTileType>
-class PageRankEdgeCentricAlgoKernel : public EdgeCentricAlgoKernel<GraphTileType> {
+class PageRankEdgeCentricAlgoKernel : public GraphGASLite::EdgeCentricAlgoKernel<GraphTileType> {
 public:
     static Ptr<PageRankEdgeCentricAlgoKernel> instanceNew(const string& name,
             const double beta, const double tolerance) {
@@ -63,26 +53,26 @@ protected:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
 
-    std::pair<UpdateType, bool> scatter(const IterCount&, Ptr<VertexType>& src, EdgeWeightType&) const {
-        auto& dpr = src->data().PAGERANK();
-        auto contribute = dpr.rank_ / src->outDeg();
+    std::pair<UpdateType, bool> scatter(const GraphGASLite::IterCount&, Ptr<VertexType>& src, EdgeWeightType&) const {
+        auto& data = src->data();
+        auto odeg = src->outDeg();
+        auto contribute = data.rank / odeg;
         std::pair<UpdateType, bool> ret;
-        ret.first.PAGERANK() = PageRankUpdate(contribute, 1);
+        ret.first = PageRankUpdate(contribute, 1);
         ret.second = true;
         return ret;
     }
 
-    bool gather(const IterCount&, Ptr<VertexType>& dst, const UpdateType& update) const {
-        auto& dpr = dst->data().PAGERANK();
-        auto& upr = update.PAGERANK();
-        dpr.sum_ += upr.contribute_;
-        dpr.collected_ += upr.count_;
-        if (dpr.collected_ == dst->inDeg()) {
-            double newRank = beta_ * dpr.sum_ + (1 - beta_);
-            bool converge = (std::abs(newRank - dpr.rank_) <= tolerance_);
-            dpr.rank_ = newRank;
-            dpr.sum_ = 0;
-            dpr.collected_ = 0;
+    bool gather(const GraphGASLite::IterCount&, Ptr<VertexType>& dst, const UpdateType& update) const {
+        auto& data = dst->data();
+        data.sum += update.contribute;
+        data.collected += update.count;
+        if (data.collected == dst->inDeg()) {
+            double newRank = beta_ * data.sum + (1 - beta_);
+            bool converge = (std::abs(newRank - data.rank) <= tolerance_);
+            data.rank = newRank;
+            data.sum = 0;
+            data.collected = 0;
             return converge;
         }
         // Convergency is unknown until all updates are collected.
@@ -95,14 +85,14 @@ protected:
         for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
             auto& v = vertexIter->second;
             if (v->inDeg() == 0) {
-                v->data().PAGERANK().rank_ = 1 - beta_;
+                v->data().rank = 1 - beta_;
             }
         }
     }
 
 protected:
     PageRankEdgeCentricAlgoKernel(const string& name, const double beta, const double tolerance)
-        : EdgeCentricAlgoKernel<GraphTileType>(name),
+        : GraphGASLite::EdgeCentricAlgoKernel<GraphTileType>(name),
           beta_(beta), tolerance_(tolerance)
     {
         // Nothing else to do.
@@ -112,8 +102,6 @@ private:
     const double beta_;
     const double tolerance_;
 };
-
-} // namespace GraphGASLite
 
 #endif // ALGO_KERNELS_EDGE_CENTRIC_PAGERANK_PAGERANK_H_
 

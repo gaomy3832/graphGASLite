@@ -6,8 +6,8 @@
 
 #define R 5
 
-typedef GraphGASLite::GraphTile<GraphGASLite::ALSData<R>, GraphGASLite::ALSUpdate<R>> Graph;
-typedef GraphGASLite::ALSEdgeCentricAlgoKernel<Graph> Kernel;
+typedef GraphGASLite::GraphTile<ALSData<R>, ALSUpdate<R>> Graph;
+typedef ALSEdgeCentricAlgoKernel<Graph> Kernel;
 
 const char appName[] = "als";
 
@@ -31,7 +31,7 @@ private:
     static constexpr double toleranceDefault = 1e-2;
 };
 
-#define VDATA(vd) std::accumulate(vd.ALS().features_.begin(), vd.ALS().features_.end(), string(""),\
+#define VDATA(vd) std::accumulate(vd.features.begin(), vd.features.end(), string(""),\
         [](const string str, const double a){ return str + " " + std::to_string(a); })
 
 #endif // KERNEL_HARNESS_H_

@@ -4,8 +4,8 @@
 #include "harness.h"
 #include "pagerank.h"
 
-typedef GraphGASLite::GraphTile<GraphGASLite::PageRankData, GraphGASLite::PageRankUpdate> Graph;
-typedef GraphGASLite::PageRankEdgeCentricAlgoKernel<Graph> Kernel;
+typedef GraphGASLite::GraphTile<PageRankData, PageRankUpdate> Graph;
+typedef PageRankEdgeCentricAlgoKernel<Graph> Kernel;
 
 const char appName[] = "pagerank";
 
@@ -34,7 +34,7 @@ private:
     static constexpr double toleranceDefault = 1e-4;
 };
 
-#define VDATA(vd) vd.PAGERANK().rank_
+#define VDATA(vd) vd.rank
 
 #endif // KERNEL_HARNESS_H_
 

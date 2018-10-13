@@ -4,8 +4,8 @@
 #include "harness.h"
 #include "sssp.h"
 
-typedef GraphGASLite::GraphTile<GraphGASLite::SSSPData<>, GraphGASLite::SSSPUpdate<>> Graph;
-typedef GraphGASLite::SSSPEdgeCentricAlgoKernel<Graph> Kernel;
+typedef GraphGASLite::GraphTile<SSSPData<>, SSSPUpdate<>> Graph;
+typedef SSSPEdgeCentricAlgoKernel<Graph> Kernel;
 
 const char appName[] = "sssp";
 
@@ -27,9 +27,9 @@ private:
 };
 
 #define VDATA(vd) \
-    std::to_string(vd.SSSP().distance_) + \
-    "\tthrough " + \
-    (vd.SSSP().predecessor_ == static_cast<uint64_t>(-1) ? "nan" : std::to_string(vd.SSSP().predecessor_))
+    std::to_string(vd.distance) + \
+    "\t<- " + \
+    (vd.predecessor == INV_VID ? "none" : std::to_string(vd.predecessor))
 
 #endif // KERNEL_HARNESS_H_
 

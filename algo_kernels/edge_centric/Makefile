@@ -4,17 +4,22 @@ include ../../makefile.inc
 SRC_DIR = .
 BIN_DIR = bin
 
+ifdef ATLASPATH
+HAS_LAPACK = 1
+CXXFLAGS += -DUSE_ATLAS \
+            -I$(ATLASPATH)/include
+LDFLAGS += -L$(ATLASPATH)/lib \
+           -Wl,--start-group -llapack -lcblas -latlas -Wl,--end-group
+endif
+
+
 APPS = \
 	   pagerank \
 	   sssp \
 
 
-ifdef ATLASPATH
-APPS += \
-		als\
-
-CXXFLAGS += -I$(ATLASPATH)/include
-LDFLAGS += -L$(ATLASPATH)/lib -llapack -lf77blas -lcblas -latlas
+ifeq ($(HAS_LAPACK),1)
+APPS += als
 endif
 
 default: $(addprefix $(BIN_DIR)/,$(APPS))

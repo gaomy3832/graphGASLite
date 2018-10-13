@@ -8,6 +8,17 @@
 #include "graph.h"
 #include "algo_kernel.h"
 
+/*
+ * int dgesv(const enum ORDER ord, const int n, const int nrhs,
+ *         double* a, const int lda, int* ipiv,
+ *         double* b, const int ldb);
+ * a: lda x n
+ * b: ldb x nrhs
+ * ipiv: pivot indices
+ * lda/ldb: leading dimension
+ * nrhs: number of right hand sides
+ */
+#ifdef USE_ATLAS
 #ifdef __cplusplus
 extern "C"
 {
@@ -16,21 +27,14 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
-namespace GraphGASLite {
+template<size_t N>
+void sqmat_ldiv_vec(double* sqmat, double* vec) {
+    int ipiv[N];
+    clapack_dgesv(CblasRowMajor, N, 1, sqmat, N, ipiv, vec, 1);
+}
+#endif // USE_ATLAS
 
 /*
- * Graph types definition.
- *
- * Define ALS() in graph data and update to get ALSData and ALSUpdate.
- */
-template<size_t>
-struct ALSData;
-
-template<size_t>
-struct ALSUpdate;
-
-/**
  * Role of vertex.
  */
 enum class Role {
@@ -49,16 +53,10 @@ template<size_t R>
 using Mat = std::array<Vec<R>, R>;
 
 template<size_t R>
-static void veczero(Vec<R>& vec) {
-    std::fill(vec.begin(), vec.end(), 0);
-}
+static void veczero(Vec<R>& vec) { std::fill(vec.begin(), vec.end(), 0); }
 
 template<size_t R>
-static void matzero(Mat<R>& mat) {
-    for (auto& vec : mat) {
-        veczero(vec);
-    }
-}
+static void matzero(Mat<R>& mat) { for (auto& vec : mat) veczero(vec); }
 
 template<size_t R>
 static void veccpy(Vec<R>& dst, const Vec<R>& src) {
@@ -67,9 +65,7 @@ static void veccpy(Vec<R>& dst, const Vec<R>& src) {
 
 template<size_t R>
 static void matcpy(Mat<R>& dst, const Mat<R>& src) {
-    for (size_t idx = 0; idx < R; idx++) {
-        veccpy(dst[idx], src[idx]);
-    }
+    for (size_t idx = 0; idx < R; idx++) veccpy(dst[idx], src[idx]);
 }
 
 template<size_t R>
@@ -86,9 +82,7 @@ static void vecdiff(Vec<R>& dst, const Vec<R>& vec1, const Vec<R>& vec2) {
 
 template<size_t R>
 static void matadd(Mat<R>& dst, const Mat<R>& mat1, const Mat<R>& mat2) {
-    for (size_t idx = 0; idx < R; idx++) {
-        vecadd(dst[idx], mat1[idx], mat2[idx]);
-    }
+    for (size_t idx = 0; idx < R; idx++) vecadd(dst[idx], mat1[idx], mat2[idx]);
 }
 
 template<size_t R>
@@ -97,28 +91,22 @@ static typename Vec<R>::value_type vecnormsq(const Vec<R>& vec) {
 }
 
 /*
- * Solve mat \ vec using LAPACK.
- *
- * int clapack_dgesv(const enum CBLAS_ORDER Order, const int N, const int NRHS,
- *         double *A, const int lda, int *ipiv,
- *         double *B, const int ldb);
- * A: lda x N
- * B: ldb x nrhs
- * ipiv: pivot indices
- * ld: leading dimension, nrhs: number of right hand sides
+ * Solve mat \ vec.
  */
 template<size_t R>
 void solve(const Mat<R>& mat, Vec<R>& vec) {
-    int ipiv[R];
     double linmat[R*R];
     for (size_t idx = 0; idx < R; idx++)
         for (size_t jdx = 0; jdx < R; jdx++)
             linmat[idx * R + jdx] = mat[idx][jdx];
     double* linvec = vec.data();
-    clapack_dgesv(CblasRowMajor, R, 1, linmat, R, ipiv, linvec, R);
+    sqmat_ldiv_vec<R>(linmat, linvec);
 }
 
 
+/*
+ * Graph types definitions.
+ */
 /*
  * Syntax and algorithm refer to:
  *   als.aaim08
@@ -126,48 +114,42 @@ void solve(const Mat<R>& mat, Vec<R>& vec) {
  */
 template<size_t R>
 struct ALSData {
-    Role role_;
-    Vec<R> features_;   // ui, mj
-    DegreeCount collected_;
-    Vec<R> vector_;     // Vi, Vj
-    Mat<R> matrix_;     // Ai, Aj
+    Role role;
+    Vec<R> features;   // ui, mj
+    GraphGASLite::DegreeCount collected;
+    Vec<R> vector;     // Vi, Vj
+    Mat<R> matrix;     // Ai, Aj
 
-    ALSData(const VertexIdx&, const Role role = Role::INVALID)
-        : role_(role), collected_(0)
+    ALSData(const GraphGASLite::VertexIdx&, const Role role_ = Role::INVALID)
+        : role(role_), collected(0)
     {
-        veczero(features_);
-        veczero(vector_);
-        matzero(matrix_);
+        veczero(features);
+        veczero(vector);
+        matzero(matrix);
     }
-
-    inline ALSData& ALS() { return *this; }
-    inline const ALSData& ALS() const { return *this; }
 };
 
 template<size_t R>
 struct ALSUpdate {
-    Vec<R> vector_;         // Vi, Vj
-    Mat<R> matrix_;         // Ai, Aj
+    Vec<R> vector;         // Vi, Vj
+    Mat<R> matrix;         // Ai, Aj
 
-    ALSUpdate(const Vec<R>& vector, const Mat<R>& matrix)
-        : vector_(vector), matrix_(matrix)
+    ALSUpdate(const Vec<R>& vector_, const Mat<R>& matrix_)
+        : vector(vector_), matrix(matrix_)
     {
         // Nothing else to do.
     }
 
     ALSUpdate() {
-        veczero(vector_);
-        matzero(matrix_);
+        veczero(vector);
+        matzero(matrix);
     }
 
     ALSUpdate& operator+=(const ALSUpdate& update) {
-        vecadd(this->vector_, this->vector_, update.vector_);
-        matadd(this->matrix_, this->matrix_, update.matrix_);
+        vecadd(vector, vector, update.vector);
+        matadd(matrix, matrix, update.matrix);
         return *this;
     }
-
-    inline ALSUpdate& ALS() { return *this; }
-    inline const ALSUpdate& ALS() const { return *this; }
 };
 
 
@@ -175,7 +157,7 @@ struct ALSUpdate {
  * Algorithm kernel definition.
  */
 template<typename GraphTileType>
-class ALSEdgeCentricAlgoKernel : public EdgeCentricAlgoKernel<GraphTileType> {
+class ALSEdgeCentricAlgoKernel : public GraphGASLite::EdgeCentricAlgoKernel<GraphTileType> {
 public:
     static Ptr<ALSEdgeCentricAlgoKernel> instanceNew(const string& name,
             const double lambda, const double tolerance) {
@@ -187,8 +169,8 @@ protected:
     typedef typename GraphTileType::VertexType VertexType;
     typedef typename GraphTileType::EdgeType::WeightType EdgeWeightType;
 
-    std::pair<UpdateType, bool> scatter(const IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& w) const {
-        auto& dals = src->data().ALS();
+    std::pair<UpdateType, bool> scatter(const GraphGASLite::IterCount& iter, Ptr<VertexType>& src, EdgeWeightType& weight) const {
+        auto& data = src->data();
 
         std::pair<UpdateType, bool> ret;
         ret.second = false;
@@ -197,18 +179,18 @@ protected:
          * (send movie features to user); and in odd iteration, we solve the
          * movie side (send user features to moive).
          */
-        if (((iter.cnt() & 0x1) && dals.role_ == Role::USER) ||
-                (!(iter.cnt() & 0x1) && dals.role_ == Role::MOVIE)) {
+        if (((iter.cnt() & 0x1) && data.role == Role::USER) ||
+                (!(iter.cnt() & 0x1) && data.role == Role::MOVIE)) {
             auto& update = ret.first;
-            auto& features = dals.features_;
+            auto& features = data.features;
 
             // vector <= ui * rij
-            std::transform(features.begin(), features.end(), update.vector_.begin(),
-                    [w](const double x){ return x * w; });    // edge weight is rij
+            std::transform(features.begin(), features.end(), update.vector.begin(),
+                    [weight](const double x){ return x * weight; });    // edge weight is rij
             // matrix <= ui * ui^T
             for (size_t idx = 0; idx < features.size(); idx++) {
                 for (size_t jdx = 0; jdx < features.size(); jdx++) {
-                    update.matrix_[idx][jdx] = features[idx] * features[jdx];
+                    update.matrix[idx][jdx] = features[idx] * features[jdx];
                 }
             }
 
@@ -217,29 +199,29 @@ protected:
         return ret;
     }
 
-    bool gather(const IterCount&, Ptr<VertexType>& dst, const UpdateType& update) const {
-        auto& dals = dst->data().ALS();
-        auto& uals = update.ALS();
+    bool gather(const GraphGASLite::IterCount&, Ptr<VertexType>& dst, const UpdateType& update) const {
+        auto& data = dst->data();
+        auto ideg = dst->inDeg();
 
-        vecadd(dals.vector_, dals.vector_, uals.vector_);
-        matadd(dals.matrix_, dals.matrix_, uals.matrix_);
-        dals.collected_++;
+        vecadd(data.vector, data.vector, update.vector);
+        matadd(data.matrix, data.matrix, update.matrix);
+        data.collected++;
 
-        if (dals.collected_ == dst->inDeg()) {
+        if (data.collected == ideg) {
             // matrix <= sum{ ui * ui^T } + lambda * n_ui * E
-            for (size_t idx = 0; idx < dals.matrix_.size(); idx++) {
-                dals.matrix_[idx][idx] += lambda_ * dst->inDeg();
+            for (size_t idx = 0; idx < data.matrix.size(); idx++) {
+                data.matrix[idx][idx] += lambda_ * ideg;
             }
 
             // features <= matrix \ vector
-            solve(dals.matrix_, dals.vector_);
-            vecdiff(dals.features_, dals.features_, dals.vector_);
-            bool converged = (std::abs(vecnormsq(dals.features_)) < tolerance_ * tolerance_);
-            veccpy(dals.features_, dals.vector_);
+            solve(data.matrix, data.vector);
+            vecdiff(data.features, data.features, data.vector);
+            bool converged = (std::abs(vecnormsq(data.features)) < tolerance_ * tolerance_);
+            veccpy(data.features, data.vector);
 
-            dals.collected_ = 0;
-            veczero(dals.vector_);
-            matzero(dals.matrix_);
+            data.collected = 0;
+            veczero(data.vector);
+            matzero(data.matrix);
 
             return converged;
         }
@@ -252,32 +234,33 @@ protected:
         // Specify vertex roles.
         for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
             auto& v = vertexIter->second;
-            v->data().ALS().role_ = v->vid() < 10000000 ? Role::USER : Role::MOVIE;
+            v->data().role = v->vid() < 10000000 ? Role::USER : Role::MOVIE;
         }
 
         // Initialize movie features.
         // First feature is average rating, others are small random numbers (between +/-5).
         for (auto edgeIter = graph->edgeIter(); edgeIter != graph->edgeIterEnd(); ++edgeIter) {
             auto& edge = *edgeIter;
-            auto src = graph->vertex(edge.srcId());
-            if (src->data().ALS().role_ == Role::MOVIE) {
-                src->data().ALS().features_[0] += edge.weight();
+            auto& data = graph->vertex(edge.srcId())->data();
+            if (data.role == Role::MOVIE) {
+                data.features[0] += edge.weight();
+                data.collected += 1;
             }
         }
         for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
-            auto& v = vertexIter->second;
-            if (v->data().ALS().role_ == Role::MOVIE) {
-                auto& features = v->data().ALS().features_;
-                features[0] = features[0] / v->outDeg();
-                std::generate(features.begin() + 1, features.end(),
+            auto& data = vertexIter->second->data();
+            if (data.role == Role::MOVIE) {
+                data.features[0] = data.features[0] / data.collected;
+                std::generate(data.features.begin() + 1, data.features.end(),
                         []{ return (std::rand() % 10) - 5; });
+                data.collected = 0;
             }
         }
     }
 
 protected:
     ALSEdgeCentricAlgoKernel(const string& name, const double lambda, const double tolerance)
-        : EdgeCentricAlgoKernel<GraphTileType>(name),
+        : GraphGASLite::EdgeCentricAlgoKernel<GraphTileType>(name),
           lambda_(lambda), tolerance_(tolerance)
     {
         // Nothing else to do.
@@ -287,8 +270,6 @@ private:
     const double lambda_;
     const double tolerance_;
 };
-
-} // namespace GraphGASLite
 
 #endif // ALGO_KERNELS_EDGE_CENTRIC_ALS_ALS_H_
 
