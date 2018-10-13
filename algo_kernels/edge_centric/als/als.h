@@ -18,6 +18,14 @@
  * lda/ldb: leading dimension
  * nrhs: number of right hand sides
  */
+#ifdef USE_MKL
+#include "mkl.h"
+template<size_t N>
+void sqmat_ldiv_vec(double* sqmat, double* vec) {
+    lapack_int ipiv[N];
+    LAPACKE_dgesv(LAPACK_ROW_MAJOR, N, 1, sqmat, N, ipiv, vec, 1);
+}
+#else // USE_MKL
 #ifdef USE_ATLAS
 #ifdef __cplusplus
 extern "C"
@@ -33,6 +41,7 @@ void sqmat_ldiv_vec(double* sqmat, double* vec) {
     clapack_dgesv(CblasRowMajor, N, 1, sqmat, N, ipiv, vec, 1);
 }
 #endif // USE_ATLAS
+#endif // USE_MKL
 
 /*
  * Role of vertex.

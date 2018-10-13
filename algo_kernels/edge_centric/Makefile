@@ -4,6 +4,14 @@ include ../../makefile.inc
 SRC_DIR = .
 BIN_DIR = bin
 
+ifdef MKLPATH
+HAS_LAPACK = 1
+CXXFLAGS += -DUSE_MKL -DMKL_ILP64 -m64 \
+            -I$(MKLPATH)/include
+LDFLAGS += -L$(MKLPATH)/lib/intel64 \
+           -Wl,--start-group -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lm -ldl \
+           -Wl,-rpath $(MKLPATH)/lib/intel64
+else \
 ifdef ATLASPATH
 HAS_LAPACK = 1
 CXXFLAGS += -DUSE_ATLAS \
