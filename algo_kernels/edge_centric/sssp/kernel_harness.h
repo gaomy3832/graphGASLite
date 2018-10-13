@@ -12,10 +12,18 @@ const char appName[] = "sssp";
 class AppArgs : public GenericArgs<uint64_t> {
 public:
     AppArgs() : GenericArgs<uint64_t>() {
-        std::get<0>(argTuple_) = 0;
+        std::get<0>(argTuple_) = srcDefault;
     };
 
-    const char* name() const { return "<src vid>"; }
+    const ArgInfo* argInfoList() const {
+        static const ArgInfo list[] = {
+            {"", "[src]", "Source vertex index (default " + std::to_string(srcDefault) + ")."},
+        };
+        return list;
+    }
+
+private:
+    static constexpr uint64_t srcDefault = 0;
 };
 
 #define VDATA(vd) \

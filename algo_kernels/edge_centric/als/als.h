@@ -36,6 +36,7 @@ struct ALSUpdate;
 enum class Role {
     USER,
     MOVIE,
+    INVALID,
 };
 
 /*
@@ -131,12 +132,8 @@ struct ALSData {
     Vec<R> vector_;     // Vi, Vj
     Mat<R> matrix_;     // Ai, Aj
 
-    /**
-     * roleFunc decides the role of the vertex by looking at the vid.
-     */
-    template<typename F>
-    ALSData(const VertexIdx& vid, F roleFunc)
-        : role_(roleFunc(vid)), collected_(0)
+    ALSData(const VertexIdx&, const Role role = Role::INVALID)
+        : role_(role), collected_(0)
     {
         veczero(features_);
         veczero(vector_);
@@ -252,6 +249,12 @@ protected:
     }
 
     void onAlgoKernelStart(Ptr<GraphTileType>& graph) const {
+        // Specify vertex roles.
+        for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
+            auto& v = vertexIter->second;
+            v->data().ALS().role_ = v->vid() < 10000000 ? Role::USER : Role::MOVIE;
+        }
+
         // Initialize movie features.
         // First feature is average rating, others are small random numbers (between +/-5).
         for (auto edgeIter = graph->edgeIter(); edgeIter != graph->edgeIterEnd(); ++edgeIter) {

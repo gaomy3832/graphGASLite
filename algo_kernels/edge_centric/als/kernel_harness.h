@@ -14,19 +14,22 @@ const char appName[] = "als";
 class AppArgs : public GenericArgs<double, double> {
 public:
     AppArgs() : GenericArgs<double, double>() {
-        std::get<0>(argTuple_) = 0.05;
-        std::get<1>(argTuple_) = 1e-2;
+        std::get<0>(argTuple_) = lambdaDefault;
+        std::get<1>(argTuple_) = toleranceDefault;
     };
 
-    const char* name() const { return "<lambda> [ <tolerance> ]"; }
-};
+    const ArgInfo* argInfoList() const {
+        static const ArgInfo list[] = {
+            {"", "[lambda]", "Regulation coefficient (default " + std::to_string(lambdaDefault) + ")."},
+            {"", "[tolerance]", "Error tolerance (default " + std::to_string(toleranceDefault) + ")."},
+        };
+        return list;
+    }
 
-/*
- * Assume input graph format as follow:
- * all users have vid less than 10M; other vertices are movies.
- */
-#define VERTEX_ARGS ([](const GraphGASLite::VertexIdx& vid){ return vid < 10000000 ? \
-        GraphGASLite::Role::USER : GraphGASLite::Role::MOVIE; })
+private:
+    static constexpr double lambdaDefault = 0.05;
+    static constexpr double toleranceDefault = 1e-2;
+};
 
 #define VDATA(vd) std::accumulate(vd.ALS().features_.begin(), vd.ALS().features_.end(), string(""),\
         [](const string str, const double a){ return str + " " + std::to_string(a); })

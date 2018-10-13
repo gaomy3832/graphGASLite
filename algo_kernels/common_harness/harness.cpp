@@ -7,16 +7,10 @@
 // Kernel harness header.
 #include "kernel_harness.h"
 
-#ifdef VERTEX_ARGS
-#define VERTEX_ARGS_WITH_COMMA ,VERTEX_ARGS
-#else
-#define VERTEX_ARGS_WITH_COMMA
-#endif // VERTEX_ARGS
-
 
 int main(int argc, char* argv[]) {
 
-    /* Common arguments. */
+    /* Parse arguments. */
 
     size_t threadCount;
     size_t graphTileCount;
@@ -24,41 +18,26 @@ int main(int argc, char* argv[]) {
     uint32_t numParts;
     bool undirected;
 
-    auto optind = algoKernelComArg(argc, argv, threadCount, graphTileCount, maxIters, numParts, undirected);
-    if (optind == -1) return 1;
-    argc -= optind;
-    argv += optind;
+    std::string edgelistFile;
+    std::string partitionFile;
+    std::string outputFile;
 
-    /* Input/output path. */
-
-    std::string edgelistFile("");
-    std::string partitionFile("");
-    std::string outputFile("");
     AppArgs appArgs;
 
-    if (argc < 1) {
-        std::cerr << "Must specify an input edge list file." << std::endl;
-        usage(appName, appArgs.name());
-        return 1;
-    }
-    edgelistFile = argv[0];
-    if (argc > 1) {
-        partitionFile = argv[1];
-        if (argc > 2) {
-            outputFile = argv[2];
+    int argRet = algoKernelArgs(argc, argv,
+            threadCount, graphTileCount, maxIters, numParts, undirected,
+            edgelistFile, partitionFile, outputFile, appArgs);
 
-            argc -= 3;
-            argv += 3;
-            appArgs.argIs(argc, argv);
-        }
+    if (argRet) {
+        algoKernelArgsPrintHelp(appName, appArgs);
+        return argRet;
     }
 
     /* Make engine and load input. */
 
     GraphGASLite::Engine<Graph> engine;
     engine.graphTileIs(GraphGASLite::GraphIOUtil::graphTilesFromEdgeList<Graph>(
-                threadCount, edgelistFile, partitionFile, 1, undirected, graphTileCount/threadCount, true
-                VERTEX_ARGS_WITH_COMMA));
+                threadCount, edgelistFile, partitionFile, 1, undirected, graphTileCount/threadCount, true));
 
     std::cout << "Graph loaded from " << edgelistFile <<
         (partitionFile.empty() ? "" : string(" and ") + partitionFile) <<
