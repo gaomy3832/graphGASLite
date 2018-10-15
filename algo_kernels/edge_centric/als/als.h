@@ -95,8 +95,14 @@ static void matadd(Mat<R>& dst, const Mat<R>& mat1, const Mat<R>& mat2) {
 }
 
 template<size_t R>
+static typename Vec<R>::value_type vecinprod(const Vec<R>& vec1, const Vec<R>& vec2) {
+    constexpr typename Vec<R>::value_type val = 0;
+    return std::inner_product(vec1.begin(), vec1.end(), vec2.begin(), val);
+}
+
+template<size_t R>
 static typename Vec<R>::value_type vecnormsq(const Vec<R>& vec) {
-    return std::inner_product(vec.begin(), vec.end(), vec.begin(), 0);
+    return vecinprod(vec, vec);
 }
 
 /*
@@ -169,8 +175,9 @@ template<typename GraphTileType>
 class ALSEdgeCentricAlgoKernel : public GraphGASLite::EdgeCentricAlgoKernel<GraphTileType> {
 public:
     static Ptr<ALSEdgeCentricAlgoKernel> instanceNew(const string& name,
-            const GraphGASLite::VertexIdx::Type boundary, const double lambda, const double tolerance) {
-        return Ptr<ALSEdgeCentricAlgoKernel>(new ALSEdgeCentricAlgoKernel(name, boundary, lambda, tolerance));
+            const GraphGASLite::VertexIdx::Type boundary, const double lambda, const double tolerance,
+            const GraphGASLite::IterCount::Type errEpoch) {
+        return Ptr<ALSEdgeCentricAlgoKernel>(new ALSEdgeCentricAlgoKernel(name, boundary, lambda, tolerance, errEpoch));
     }
 
 protected:
@@ -267,11 +274,28 @@ protected:
         }
     }
 
+    void onIterationEnd(Ptr<GraphTileType>& graph, const GraphGASLite::IterCount& iter) const {
+        if (errEpoch_ != 0 && iter % errEpoch_ == 0) {
+            double err = 0;
+            for (auto edgeIter = graph->edgeIter(); edgeIter != graph->edgeIterEnd(); ++edgeIter) {
+                auto& edge = *edgeIter;
+                const auto& srcFeatures = graph->vertex(edge.srcId())->data().features;
+                const auto& dstFeatures = graph->vertex(edge.dstId())->data().features;
+                double diff = edge.weight() - vecinprod(srcFeatures, dstFeatures);
+                err += diff * diff;
+            }
+            // Each undirect edge has been counted twice for each direction.
+            err /= 2;
+            info("\tIteration %lu: error %lf", iter.cnt(), err);
+        }
+    }
+
 protected:
     ALSEdgeCentricAlgoKernel(const string& name,
-            const GraphGASLite::VertexIdx::Type boundary, const double lambda, const double tolerance)
+            const GraphGASLite::VertexIdx::Type boundary, const double lambda, const double tolerance,
+            const GraphGASLite::IterCount::Type errEpoch)
         : GraphGASLite::EdgeCentricAlgoKernel<GraphTileType>(name),
-          boundary_(boundary), lambda_(lambda), tolerance_(tolerance)
+          boundary_(boundary), lambda_(lambda), tolerance_(tolerance), errEpoch_(errEpoch)
     {
         // Nothing else to do.
     }
@@ -280,6 +304,7 @@ private:
     const GraphGASLite::VertexIdx boundary_;
     const double lambda_;
     const double tolerance_;
+    const GraphGASLite::IterCount errEpoch_;
 };
 
 #endif // ALGO_KERNELS_EDGE_CENTRIC_ALS_ALS_H_

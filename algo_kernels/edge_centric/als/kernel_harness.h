@@ -11,12 +11,13 @@ typedef ALSEdgeCentricAlgoKernel<Graph> Kernel;
 
 const char appName[] = "als";
 
-class AppArgs : public GenericArgs<uint64_t, double, double> {
+class AppArgs : public GenericArgs<uint64_t, double, double, uint64_t> {
 public:
-    AppArgs() : GenericArgs<uint64_t, double, double>() {
+    AppArgs() : GenericArgs<uint64_t, double, double, uint64_t>() {
         std::get<0>(argTuple_) = boundaryDefault;
         std::get<1>(argTuple_) = lambdaDefault;
         std::get<2>(argTuple_) = toleranceDefault;
+        std::get<3>(argTuple_) = errEpochDefault;
     };
 
     const ArgInfo* argInfoList() const {
@@ -25,6 +26,8 @@ public:
                                " Vertices smaller are users, and vertices equal or larger are movies."},
             {"", "[lambda]", "Regulation coefficient (default " + std::to_string(lambdaDefault) + ")."},
             {"", "[tolerance]", "Error tolerance (default " + std::to_string(toleranceDefault) + ")."},
+            {"", "[errEpoch]", "Epoch of iterations to calculate error (default "
+                + std::to_string(errEpochDefault) + " means never)."},
         };
         return list;
     }
@@ -33,6 +36,7 @@ private:
     static constexpr uint64_t boundaryDefault = 10000000;
     static constexpr double lambdaDefault = 0.05;
     static constexpr double toleranceDefault = 1e-2;
+    static constexpr uint64_t errEpochDefault = 0;
 };
 
 #define VDATA(vd) std::accumulate(vd.features.begin(), vd.features.end(), string(""),\
