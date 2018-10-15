@@ -233,7 +233,7 @@ public:
     }
 
     Ptr<VertexType> vertex(const VertexIdx& vid) {
-        if (vid != vidLastVisited_) {
+        if (!finalized_ || vid != vidLastVisited_) {
             auto it = vertices_.find(vid);
             if (it != vertices_.end()) {
                 vLastVisited_ = it->second;
@@ -268,7 +268,7 @@ public:
     /* Mirror vertices. */
 
     Ptr<MirrorVertexType> mirrorVertex(const VertexIdx& vid) {
-        if (vid != mvidLastVisited_) {
+        if (!finalized_ || vid != mvidLastVisited_) {
             auto it = mirrorVertices_.find(vid);
             if (it != mirrorVertices_.end()) {
                 mvLastVisited_ = it->second;
