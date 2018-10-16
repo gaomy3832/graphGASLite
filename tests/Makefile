@@ -56,7 +56,7 @@ clean:
 ## Google Test setup and clean
 $(GTEST_LIB):
 	@if [ ! -d "$(GTEST_REPO)" ]; then git clone git@github.com:google/googletest.git $(GTEST_REPO); fi
-	cd $(GTEST_BASE)/make; make
+	cd $(GTEST_BASE)/make; CXXFLAGS=-std=c++11 make
 
 clean_gtest:
 	rm -rf $(GTEST_REPO)
