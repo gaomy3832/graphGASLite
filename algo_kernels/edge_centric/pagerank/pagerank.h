@@ -80,11 +80,18 @@ protected:
     }
 
     void onAlgoKernelStart(Ptr<GraphTileType>& graph) const {
-        // For those who do not have in-edges, gather() will never be invoked.
-        // Directly set the rank to the teleport value, and never change.
+        for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
+            auto& v = vertexIter->second;
+            v->data().rank = 1;
+        }
+    }
+
+    void onAlgoKernelEnd(Ptr<GraphTileType>& graph) const {
+        // For those who have no in-edges, gather() will never be invoked. Set the rank to the teleport value.
         for (auto vertexIter = graph->vertexIter(); vertexIter != graph->vertexIterEnd(); ++vertexIter) {
             auto& v = vertexIter->second;
             if (v->inDeg() == 0) {
+                assert(std::abs(v->data().rank - 1) <= tolerance_);  // initial value
                 v->data().rank = 1 - beta_;
             }
         }
