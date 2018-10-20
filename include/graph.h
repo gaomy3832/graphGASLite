@@ -213,7 +213,8 @@ public:
 
 public:
     explicit GraphTile(const TileIdx& tid)
-        : tid_(tid), vertices_(), edges_(), edgeSorted_(false), finalized_(false)
+        : tid_(tid), vertices_(), edges_(), edgeSorted_(false), finalized_(false),
+          vidLastVisited_(-1), vLastVisited_(nullptr), mvidLastVisited_(-1), mvLastVisited_(nullptr)
     {
         // Nothing else to do.
     }
@@ -231,16 +232,24 @@ public:
         }
     }
 
-    Ptr<VertexType> vertex(const VertexIdx& vid) const {
-        auto it = vertices_.find(vid);
-        if (it != vertices_.end()) {
-            return it->second;
-        } else {
-            return nullptr;
+    Ptr<VertexType> vertex(const VertexIdx& vid) {
+        if (!finalized_ || vid != vidLastVisited_) {
+            auto it = vertices_.find(vid);
+            if (it != vertices_.end()) {
+                vLastVisited_ = it->second;
+            } else {
+                vLastVisited_ = nullptr;
+            }
+            vidLastVisited_ = vid;
         }
+        return vLastVisited_;
     }
 
     size_t vertexCount() const { return vertices_.size(); }
+
+    bool hasVertex(const VertexIdx& vid) const {
+        return vertices_.find(vid) != vertices_.end();
+    }
 
     inline VertexConstIter vertexIter() const {
         return vertices_.cbegin();
@@ -258,13 +267,17 @@ public:
 
     /* Mirror vertices. */
 
-    Ptr<MirrorVertexType> mirrorVertex(const VertexIdx& vid) const {
-        auto it = mirrorVertices_.find(vid);
-        if (it != mirrorVertices_.end()) {
-            return it->second;
-        } else {
-            return nullptr;
+    Ptr<MirrorVertexType> mirrorVertex(const VertexIdx& vid) {
+        if (!finalized_ || vid != mvidLastVisited_) {
+            auto it = mirrorVertices_.find(vid);
+            if (it != mirrorVertices_.end()) {
+                mvLastVisited_ = it->second;
+            } else {
+                mvLastVisited_ = nullptr;
+            }
+            mvidLastVisited_ = vid;
         }
+        return mvLastVisited_;
     }
 
     inline MirrorVertexConstIter mirrorVertexIter() const {
@@ -376,6 +389,12 @@ private:
      * graph topology are allowed, e.g, edgeSortedIs().
      */
     bool finalized_;
+
+    // Cached vertex and mirror vertex.
+    VertexIdx vidLastVisited_;
+    Ptr<VertexType> vLastVisited_;
+    VertexIdx mvidLastVisited_;
+    Ptr<MirrorVertexType> mvLastVisited_;
 
 private:
     void checkNotFinalized(const string& funcName) {

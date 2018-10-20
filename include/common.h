@@ -61,12 +61,20 @@ public:
         this->cnt_ -= other.cnt_;
         return *this;
     }
+    CountType& operator%=(const CountType& other) {
+        this->cnt_ %= other.cnt_;
+        return *this;
+    }
     friend CountType operator+(CountType lhs, const CountType& rhs) {
         lhs += rhs;
         return lhs;
     }
     friend CountType operator-(CountType lhs, const CountType& rhs) {
         lhs -= rhs;
+        return lhs;
+    }
+    friend CountType operator%(CountType lhs, const CountType& rhs) {
+        lhs %= rhs;
         return lhs;
     }
     template<typename T>

@@ -10,56 +10,103 @@
 #include "common.h"
 
 
-void usage(const char* appName, const char* appArgsName) {
-    std::cerr <<
-        "Usage: " << appName << " [options] "
-        "<input edge list file> [ <partition file> [ <output file> [ " <<
-        appArgsName <<
-        " ] ] ]" << std::endl;
-}
-
-
-/**********************************************************
- *
- * Algorithm kernel common arguments.
- *
- **********************************************************/
+/**
+ * Argument information.
+ */
+struct ArgInfo {
+    string optchar;
+    string placeholder;
+    string help;
+};
 
 constexpr uint64_t maxItersDefault = 1000;
 constexpr uint32_t numPartsDefault = 16;
 
-void algoKernelComArgHelp() {
-    constexpr int w = 15;
-    std::cerr << "Options:" << std::endl
-        << '\t' << "-t " << std::left << std::setw(w) << "<threads>"
-        << "Number of threads (required)." << std::endl
-        << '\t' << "-g " << std::left << std::setw(w) << "<gtiles>"
-        << "Number of graph tiles (required). Should be multiplier of threads." << std::endl
-        << '\t' << "-m " << std::left << std::setw(w) << "<maxiter>"
-        << "Maximum iteration number (default " << maxItersDefault << ")." << std::endl
-        << '\t' << "-p " << std::left << std::setw(w) << "<numParts>"
-        << "Number of partitions per thread (default " << numPartsDefault << ")." << std::endl
-        << '\t' << "-u " << std::left << std::setw(w) << ""
-        << "Undirected graph (default directed)." << std::endl
-        << '\t' << "-h " << std::left << std::setw(w) << ""
-        << "Print this help message." << std::endl;
-}
+const ArgInfo optInfoList[] = {
+    {"-t", "<threads>", "Number of threads (required)."},
+    {"-g", "<gtiles>", "Number of graph tiles (required). Should be multiplier of threads."},
+    {"-m", "[maxiter]", "Maximum iteration number (default " + std::to_string(maxItersDefault) + ")."},
+    {"-p", "[numParts]", "Number of partitions per thread (default " + std::to_string(numPartsDefault) + ")."},
+    {"-u", "", "Undirected graph (default directed)."},
+    {"-h", "", "Print this help message."},
+};
+
+const ArgInfo comArgInfoList[] = {
+    {"", "<edgelistFile>", "Input graph edge list file path (required)."},
+    {"", "[partitionFile]", "Input graph partition file path."},
+    {"", "[outputFile]", "Output result file path."},
+};
+
 
 /**
- * Parse command line options to common algo kernel parameters.
- *
- * @return              Number of args parsed. Return -1 on failure.
+ * Print command line arguments help message.
  */
-int algoKernelComArg(const int argc, char* const* argv,
+template <typename AppArgs>
+void algoKernelArgsPrintHelp(const char* appName, const AppArgs& appArgs) {
+    const auto appArgInfoList = appArgs.argInfoList();
+
+    std::cerr << std::endl;
+
+    std::cerr << "Usage: " << appName;
+    std::cerr << ' ' << "[options]";
+    for (const auto& comArgInfo : comArgInfoList) std::cerr << ' ' << comArgInfo.placeholder;
+    for (size_t idx = 0; idx < appArgs.argCount; idx++) std::cerr << ' ' << appArgInfoList[idx].placeholder;
+    std::cerr << std::endl;
+
+    constexpr int w = 15;
+
+    std::cerr << "Options:" << std::endl;
+    for (const auto& optInfo : optInfoList) {
+        std::cerr << '\t' << optInfo.optchar << ' '
+            << std::left << std::setw(w) << optInfo.placeholder << ' '
+            << optInfo.help << std::endl;
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Common arguments:" << std::endl;
+    for (const auto& comArgInfo : comArgInfoList) {
+        assert(comArgInfo.optchar.empty());
+        std::cerr << '\t'
+            << std::left << std::setw(w + 3) << comArgInfo.placeholder << ' '
+            << comArgInfo.help << std::endl;
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "App-specific arguments:" << std::endl;
+    for (size_t idx = 0; idx < appArgs.argCount; idx++) {
+        const auto& appArgInfo = appArgInfoList[idx];
+        assert(appArgInfo.optchar.empty());
+        std::cerr << '\t'
+            << std::left << std::setw(w + 3) << appArgInfo.placeholder << ' '
+            << appArgInfo.help << std::endl;
+    }
+    std::cerr << std::endl;
+}
+
+
+/**
+ * Parse command line arguments to algo kernel parameters.
+ */
+template <typename AppArgs>
+int algoKernelArgs(int argc, char** argv,
         size_t& threadCount, size_t& graphTileCount,
-        uint64_t& maxIters, uint32_t& numParts,
-        bool& undirected) {
+        uint64_t& maxIters, uint32_t& numParts, bool& undirected,
+        string& edgelistFile, string& partitionFile, string& outputFile,
+        AppArgs& appArgs) {
 
     threadCount = 0;
     graphTileCount = 0;
     maxIters = maxItersDefault;
     numParts = numPartsDefault;
     undirected = false;
+
+    edgelistFile = "";
+    partitionFile = "";
+    outputFile = "";
+
+    appArgs = AppArgs();
+
+    /* Common options. */
 
     int ch;
     opterr = 0; // Reset potential previous errors.
@@ -82,31 +129,56 @@ int algoKernelComArg(const int argc, char* const* argv,
                 break;
             case 'h':
             default:
-                algoKernelComArgHelp();
                 return -1;
         }
     }
 
     if (threadCount == 0 || graphTileCount == 0) {
         std::cerr << "Must specify number of threads and number of graph tiles." << std::endl;
-        algoKernelComArgHelp();
         return -1;
     }
     if (graphTileCount % threadCount != 0) {
         std::cerr << "Number of threads must be a divisor of number of graph tiles." << std::endl;
-        algoKernelComArgHelp();
         return -1;
     }
 
-    return optind;
+    argc -= optind;
+    argv += optind;
+
+    /* Common arguments. */
+
+    if (argc < 1) {
+        std::cerr << "Must specify an input edge list file." << std::endl;
+        return -1;
+    }
+    edgelistFile = argv[0];
+    argc -= 1;
+    argv += 1;
+
+    if (argc > 0) {
+        partitionFile = argv[0];
+        argc -= 1;
+        argv += 1;
+    }
+
+    if (argc > 0) {
+        outputFile = argv[0];
+        argc -= 1;
+        argv += 1;
+    }
+
+    /* App-specific arguments. */
+
+    appArgs.argIs(argc, argv);
+
+    if (!appArgs.isValid()) {
+        std::cerr << "Invalid app-specific argument." << std::endl;
+        return -1;
+    }
+
+    return 0;
 }
 
-
-/**********************************************************
- *
- * Application specific arguments.
- *
- **********************************************************/
 
 /**
  * Generic arguments.
@@ -134,12 +206,14 @@ public:
         return dispatch(KernelType::instanceNew, typename GenSeq<sizeof...(ArgTypes)>::Type(), kernelName);
     }
 
-    virtual const char* name() const = 0;
-
     virtual void argIs(int argc, char* argv[]) {
         ArgReadFunc func(argc, argv);
         foreach(func);
     }
+
+    virtual const ArgInfo* argInfoList() const = 0;
+
+    virtual bool isValid() const { return true; }
 
 protected:
     std::tuple<ArgTypes...> argTuple_;
